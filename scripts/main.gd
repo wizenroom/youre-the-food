@@ -10,6 +10,8 @@ const VIEW_H := 640.0
 const TEX_ON := preload("res://assets/ui_on.png")
 const TEX_OFF := preload("res://assets/ui_off.png")
 const TEX_BLOCK := preload("res://assets/fx_block.png")
+const TEX_SPARK := preload("res://assets/fx_hit_spark.png")
+const TEX_HURT := preload("res://assets/fx_hurt.png")
 const SAVE_PATH := "user://highscore.cfg"
 const BOULDER := preload("res://scripts/boulder.gd")
 const CRITTER := preload("res://scripts/critter.gd")
@@ -208,6 +210,17 @@ func spawn_burst(pos: Vector2, color: Color, count: int) -> void:
 	$World/Effects.burst(pos, color, count)
 
 
+# spark where a dash connected: "you dealt damage"
+func spawn_hit_spark(pos: Vector2, size := 48.0) -> void:
+	$World/Effects.popup(pos, TEX_SPARK, size)
+
+
+# red burst on the player: "you lost a life"
+func spawn_hurt(pos: Vector2) -> void:
+	$World/Effects.popup(pos, TEX_HURT, 64)
+	$World/Effects.burst(pos, Color("ff4757"), 20)
+
+
 func spawn_pellet(pos: Vector2) -> void:
 	if alive_pellets().size() >= 150:
 		return
@@ -355,6 +368,7 @@ func _update_game(dt: float) -> void:
 
 			if head_hit or (body_hit >= 0 and body_hit <= 2):
 				var boom: Vector2 = s.explode_head()
+				spawn_hit_spark(boom, 60.0)
 				# shove clear so the damage check can't re-trigger
 				var d := player.position - boom
 				var dist := maxf(d.length(), 1.0)
@@ -368,6 +382,7 @@ func _update_game(dt: float) -> void:
 
 			if body_hit >= 0:
 				s.cut_at(body_hit)
+				spawn_hit_spark(player.position)
 				spawn_burst(player.position, Color("2ed573"), 12)
 				player.invuln = maxf(player.invuln, 0.3)
 				dash_hit = true
@@ -418,6 +433,7 @@ func _update_game(dt: float) -> void:
 		if c.position.distance_to(player.position) < c.radius + player.radius:
 			if player.dash_time > 0:
 				add_score(15)
+				spawn_hit_spark(c.position, 36.0)
 				c.die()
 			elif c.awake():
 				player.hit()
