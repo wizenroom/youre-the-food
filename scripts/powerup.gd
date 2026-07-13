@@ -31,4 +31,4 @@ func _draw() -> void:
 		return  # expiry flicker
 	var bob := sin(Time.get_ticks_msec() / 250.0) * 3.0
 	Util.draw_shadow(self, Vector2(0, 8), 24, 0.6)
-	Util.draw_sprite(self, TEXTURES[kind], Vector2(0, bob), 28)
+	Util.draw_sprite(self, TEXTURES[kind], Vector2(0, bob), 100)
