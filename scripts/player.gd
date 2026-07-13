@@ -12,6 +12,7 @@ var roll := 0.0
 var max_lives := 3
 var lives := 3
 var invuln := 0.0
+var hurt_flash := 0.0        # visual-only: set when a life is lost, not on dash invuln
 var dash_time := 0.0
 var dash_cooldown := 0.0
 var dash_cd_total := 0.85
@@ -61,6 +62,7 @@ func update(dt: float) -> void:
 	roll += (vel.x + vel.y) * dt / 24.0
 
 	invuln = maxf(0, invuln - dt)
+	hurt_flash = maxf(0, hurt_flash - dt)
 	dash_time = maxf(0, dash_time - dt)
 	dash_cooldown = maxf(0, dash_cooldown - dt)
 
@@ -135,7 +137,8 @@ func hit() -> void:
 		return
 	lives -= 1
 	invuln = 2.0
-	game.spawn_burst(position, Color("ff4757"), 20)
+	hurt_flash = 2.0
+	game.spawn_hurt(position)
 	if lives <= 0:
 		game.game_over()
 
@@ -158,7 +161,7 @@ func pick_up(kind: String) -> void:
 	power = kind
 	power_time = 999.0 if kind == "shield" else 8.0  # shield lasts until used
 
-
+## DEPRECIATED. 
 func drawSprite() -> void:
 	if power == "pierce":
 		Util.draw_sprite(self, _tex, Vector2.ZERO, 50, Color(3,3,0,1))
@@ -172,6 +175,13 @@ func drawSprite() -> void:
 	
 
 func _draw() -> void:
+	# flicker only when actually damaged, not during dash-granted invuln
+	if hurt_flash > 0 and int(floor(hurt_flash * 12)) % 2 == 0:
+		return
+	# red tint for the first moments after losing a life
+	var mod := Color.WHITE
+	if hurt_flash > 1.5:
+		mod = Color(1.0, 0.45, 0.45)
 	Util.draw_shadow(self, Vector2.ZERO, 38)
 	
 	if power == "turbo":
@@ -180,8 +190,7 @@ func _draw() -> void:
 		draw_line(Vector2.ZERO, randvector, Color.CYAN, 10)
 	
 	draw_set_transform(Vector2.ZERO, roll, Vector2.ONE)
-	drawSprite()
-	
+	Util.draw_sprite(self, _tex, Vector2.ZERO, 38, mod)
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	if power == "shield":
 		draw_arc(Vector2.ZERO, radius + 7, 0, TAU, 40, Color(0.2, 0.5, 0.2, 0.9), 8)

@@ -164,16 +164,21 @@ func grow(n: int) -> void:
 		segments.append(tail)
 
 
-# body only
+# body only. returns the nearest overlapping segment, not the first by index,
+# so a coiled snake can't turn a tail hit into a front-segment hit
 func hit_body(p: Vector2, r: float) -> int:
 	var neck_max := head_radius + seg_radius - 6
+	var best := -1
+	var best_d := INF
 	for i in segments.size():
 		var s := segments[i]
 		if s.distance_to(head) < neck_max:
 			continue
-		if p.distance_to(s) < r + seg_radius:
-			return i
-	return -1
+		var d := p.distance_to(s)
+		if d < r + seg_radius and d < best_d:
+			best_d = d
+			best = i
+	return best
 
 
 func hit_head(p: Vector2, r: float) -> bool:
