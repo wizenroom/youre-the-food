@@ -124,9 +124,6 @@ func dash() -> void:
 func hittedSomethingWhileDashing() -> void:
 	successfulhit = true
 	
-	
-	
-
 func hit() -> void:
 	if invuln > 0:
 		return
@@ -180,9 +177,17 @@ func _draw() -> void:
 		return
 	# red tint for the first moments after losing a life
 	var mod := Color.WHITE
+	var additionalsize = 0
 	if hurt_flash > 1.5:
-		mod = Color(1.0, 0.45, 0.45)
-	Util.draw_shadow(self, Vector2.ZERO, 38)
+		mod = Color(4.0, 0.45, 0.45)
+		
+	if successfulhit == true:
+		mod = Color(2, 8, 0.5)
+		
+	if power == "pierce":
+		additionalsize = 10
+	
+	Util.draw_shadow(self, Vector2.ZERO, 38+additionalsize)
 	
 	if power == "turbo":
 		var randvector = (-vel).rotated(randf_range(-PI/10, PI/10))
@@ -190,7 +195,8 @@ func _draw() -> void:
 		draw_line(Vector2.ZERO, randvector, Color.CYAN, 10)
 	
 	draw_set_transform(Vector2.ZERO, roll, Vector2.ONE)
-	Util.draw_sprite(self, _tex, Vector2.ZERO, 38, mod)
+	Util.draw_sprite(self, _tex, Vector2.ZERO, 38+additionalsize, mod)
+	
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	if power == "shield":
 		draw_arc(Vector2.ZERO, radius + 7, 0, TAU, 40, Color(0.2, 0.5, 0.2, 0.9), 8)
