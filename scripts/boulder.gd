@@ -62,6 +62,7 @@ func _impact() -> void:
 
 	for c in game.alive_critters():
 		if c.position.distance_to(position) < IMPACT_RADIUS + c.radius:
+			game.spawn_critter_squish(c.position)
 			c.die()
 
 	# heads explode, bodies get severed

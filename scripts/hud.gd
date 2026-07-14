@@ -13,9 +13,9 @@ const LABEL_TIME := preload("res://assets/ui_time.png")
 
 @onready var game: Node = get_node("/root/Main")
 
-var _score_value: Label
-var _wave_value: Label
-var _time_value: Label
+var _score_value: PaintedNumber
+var _wave_value: PaintedNumber
+var _time_value: PaintedNumber
 var _dash_label: Label
 var _power_label: Label
 var _banner: Label
@@ -28,9 +28,10 @@ func _ready() -> void:
 	_add_painted(LABEL_SCORE, Vector2(68, 34), 100)
 	_add_painted(LABEL_WAVE, Vector2(68, 82), 100)
 	_add_painted(LABEL_TIME, Vector2(68, 130), 100)
-	_score_value = _add_label("0", Vector2(128, 34), 26, INK)
-	_wave_value = _add_label("0", Vector2(128, 82), 26, INK)
-	_time_value = _add_label("30", Vector2(128, 130), 26, INK)
+	_score_value = _add_number(Vector2(128, 34))
+	_wave_value = _add_number(Vector2(128, 82))
+	_time_value = _add_number(Vector2(128, 130))
+	_time_value.value = 30
 
 	for i in 3:
 		var h := TextureRect.new()
@@ -68,6 +69,15 @@ func _add_painted(tex: Texture2D, center: Vector2, sz: float) -> void:
 	add_child(r)
 
 
+func _add_number(center_left: Vector2, h := 36.0) -> PaintedNumber:
+	var n := PaintedNumber.new()
+	n.digit_height = h
+	n.position = center_left - Vector2(0, 17)
+	n.size = Vector2(320, 34)
+	add_child(n)
+	return n
+
+
 func _add_label(text: String, pos: Vector2, font_size: int, color: Color, centered_y := true) -> Label:
 	var l := Label.new()
 	l.text = text
@@ -84,9 +94,9 @@ func _add_label(text: String, pos: Vector2, font_size: int, color: Color, center
 func update_hud() -> void:
 	if game.player == null:
 		return
-	_score_value.text = str(game.score)
-	_wave_value.text = str(game.wave)
-	_time_value.text = str(maxi(0, ceili(game.wave_timer)))
+	_score_value.value = game.score
+	_wave_value.value = game.wave
+	_time_value.value = maxi(0, ceili(game.wave_timer))
 
 	for i in _hearts.size():
 		_hearts[i].texture = HEART if i < game.player.lives else HEART_EMPTY

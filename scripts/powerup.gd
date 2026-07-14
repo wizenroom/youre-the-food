@@ -10,7 +10,7 @@ const TEXTURES := {
 }
 
 var kind: String = KINDS[randi() % KINDS.size()]
-var radius := 17.0
+var radius := 20.0
 var life := 9.0
 var dead := false
 
@@ -29,6 +29,6 @@ func _process(_dt: float) -> void:
 func _draw() -> void:
 	if life < 3 and int(floor(life * 8)) % 2 == 0:
 		return  # expiry flicker
-	var bob := sin(Time.get_ticks_msec() / 250.0) * 3.0
-	Util.draw_shadow(self, Vector2(0, 10), 34, 0.6)
+	var bob := sin(Time.get_ticks_msec() / 250.0) * 3.5
+	Util.draw_shadow(self, Vector2(0, 12), 46, 0.6)
 	Util.draw_sprite(self, TEXTURES[kind], Vector2(0, bob), 100)

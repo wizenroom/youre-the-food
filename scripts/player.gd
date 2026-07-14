@@ -35,6 +35,11 @@ var successfulhit = false
 var damaged = false
 
 var _tex: Texture2D = preload("res://assets/player.png")
+var _tex_streak: Texture2D = preload("res://assets/fx_speed_streak.png")
+var _tex_shield: Texture2D = preload("res://assets/powerup_shield.png")
+var _tex_pierce: Texture2D = preload("res://assets/powerup_pierce.png")
+# the painted lightning points up-right at roughly this angle
+const STREAK_ART_ANGLE := 0.45
 
 
 func setup(g: Node, pos: Vector2) -> void:
@@ -211,26 +216,43 @@ func _draw() -> void:
 	var additionalsize = 0
 	if hurt_flash > 0:
 		mod = Color(4.0, 0.45, 0.45)
-		
+
 	if successfulhit == true:
 		mod = Color(2, 8, 0.5)
-		
+
 	if power == "pierce":
 		additionalsize = 10
-	
-	Util.draw_shadow(self, Vector2.ZERO, 38+additionalsize)
-	
-	if power == "turbo":
-		var randvector = (-vel).rotated(randf_range(-PI/10, PI/10))
-		randvector = randvector.normalized() * (vel.length() * randf() * 0.2)
-		draw_line(Vector2.ZERO, randvector, Color.CYAN, 10)
-	
+
+	Util.draw_shadow(self, Vector2.ZERO, 38 + additionalsize)
+
+	# turbo: painted lightning streaks trailing behind the ball
+	if power == "turbo" and vel.length() > 40.0:
+		var back := -vel.normalized()
+		var rot := vel.angle() + STREAK_ART_ANGLE
+		var tms := Time.get_ticks_msec() / 1000.0
+		for i in 3:
+			var wob := sin(tms * 22.0 + i * 2.1)
+			var at := back * (30.0 + i * 20.0) \
+					+ back.orthogonal() * wob * 5.0
+			var alpha := (0.85 - i * 0.22) * (0.7 + 0.3 * sin(tms * 30.0 + i))
+			var size := 46.0 - i * 8.0
+			draw_set_transform(at, rot, Vector2.ONE)
+			draw_texture_rect(_tex_streak,
+					Rect2(Vector2(-size, -size) / 2.0, Vector2(size, size)),
+					false, Color(1, 1, 1, alpha))
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+
 	draw_set_transform(Vector2.ZERO, roll, Vector2.ONE)
-	Util.draw_sprite(self, _tex, Vector2.ZERO, 38+additionalsize, mod)
-	
+	Util.draw_sprite(self, _tex, Vector2.ZERO, 38 + additionalsize, mod)
+
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
-	if power == "shield":
-		draw_arc(Vector2.ZERO, radius + 7, 0, TAU, 40, Color(0.2, 0.5, 0.2, 0.9), 8)
+
+	# active power badge floats over your head, sprite instead of shapes
+	if power == "shield" or power == "pierce":
+		var badge := _tex_shield if power == "shield" else _tex_pierce
+		var bob := sin(Time.get_ticks_msec() / 220.0) * 3.5
+		var pulse := 0.85 + 0.15 * sin(Time.get_ticks_msec() / 130.0)
+		Util.draw_sprite(self, badge, Vector2(0, -48 + bob), 44.0 * pulse)
 	# cooldown ring, full circle = dash ready
 	if dash_cooldown > 0:
 		var f := 1.0 - dash_cooldown / dash_cd_total

@@ -20,6 +20,7 @@
 [ext_resource type="Texture2D" uid="uid://cnedibvbvrnje" path="res://assets/ui_grid.png" id="18"]
 [ext_resource type="Texture2D" uid="uid://bh26n0nur1hs4" path="res://assets/ui_highscore.png" id="19"]
 [ext_resource type="Shader" uid="uid://j2kllg6fxtm4" path="res://new_shader.gdshader" id="20_gqmmt"]
+[ext_resource type="Script" uid="uid://bqf43yy8vxmru" path="res://scripts/painted_number.gd" id="21"]
 
 [sub_resource type="GDScript" id="GDScript_0ld40"]
 script/source = "extends Sprite2D
@@ -145,17 +146,17 @@ texture = ExtResource("19")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="HighScoreValue" type="Label" parent="UI/Menu" unique_id=700040090]
+[node name="HighScoreValue" type="Control" parent="UI/Menu" unique_id=700040090]
 visible = false
-layout_mode = 0
+anchors_preset = 0
 offset_left = 28.0
 offset_top = 152.0
 offset_right = 188.0
 offset_bottom = 188.0
-theme_override_colors/font_color = Color(0.176, 0.204, 0.212, 1)
-theme_override_font_sizes/font_size = 30
-text = "0"
-horizontal_alignment = 1
+mouse_filter = 2
+script = ExtResource("21")
+digit_height = 40.0
+centered = true
 
 [node name="OptionsButton" type="TextureButton" parent="UI/Menu" unique_id=1275171362]
 visible = false
@@ -356,16 +357,15 @@ texture = ExtResource("16")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="ScoreValue" type="Label" parent="UI/DeathScreen" unique_id=413953787]
-layout_mode = 0
+[node name="ScoreValue" type="Control" parent="UI/DeathScreen" unique_id=413953787]
+anchors_preset = 0
 offset_left = 408.0
 offset_top = 345.0
 offset_right = 548.0
 offset_bottom = 379.0
-theme_override_colors/font_color = Color(0.176, 0.204, 0.212, 1)
-theme_override_font_sizes/font_size = 26
-text = "0"
-vertical_alignment = 1
+mouse_filter = 2
+script = ExtResource("21")
+digit_height = 34.0
 
 [node name="WaveLabel" type="TextureRect" parent="UI/DeathScreen" unique_id=1245935151]
 layout_mode = 0
@@ -378,16 +378,15 @@ texture = ExtResource("17")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="WaveValue" type="Label" parent="UI/DeathScreen" unique_id=850790345]
-layout_mode = 0
+[node name="WaveValue" type="Control" parent="UI/DeathScreen" unique_id=850790345]
+anchors_preset = 0
 offset_left = 606.0
 offset_top = 345.0
 offset_right = 700.0
 offset_bottom = 379.0
-theme_override_colors/font_color = Color(0.176, 0.204, 0.212, 1)
-theme_override_font_sizes/font_size = 26
-text = "0"
-vertical_alignment = 1
+mouse_filter = 2
+script = ExtResource("21")
+digit_height = 34.0
 
 [node name="NewBest" type="Label" parent="UI/DeathScreen" unique_id=1574003857]
 visible = false

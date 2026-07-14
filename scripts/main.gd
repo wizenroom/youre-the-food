@@ -12,6 +12,7 @@ const TEX_OFF := preload("res://assets/ui_off.png")
 const TEX_BLOCK := preload("res://assets/fx_block.png")
 const TEX_SPARK := preload("res://assets/fx_hit_spark.png")
 const TEX_HURT := preload("res://assets/fx_hurt.png")
+const TEX_CRITTER_SQUISH := preload("res://assets/critter_squish.png")
 const SAVE_PATH := "user://highscore.cfg"
 const BOULDER := preload("res://scripts/boulder.gd")
 const CRITTER := preload("res://scripts/critter.gd")
@@ -313,9 +314,22 @@ func spawn_splat(pos: Vector2) -> void:
 	$World/Splats.add_child(s)
 
 
+# squish mark with custom art (ants, critters)
+func spawn_squish(pos: Vector2, tex: Texture2D, size: float, tint := Color.WHITE) -> void:
+	var s := SplatStain.new()
+	s.position = pos
+	s.set_look(tex, size, tint)
+	$World/Splats.add_child(s)
+
+
+# critter squishes come in a random paint color every time
+func spawn_critter_squish(pos: Vector2) -> void:
+	spawn_squish(pos, TEX_CRITTER_SQUISH, 34.0, Color.from_hsv(randf(), 0.8, 0.9))
+
+
 func game_over() -> void:
-	$UI/DeathScreen/ScoreValue.text = str(score)
-	$UI/DeathScreen/WaveValue.text = str(wave)
+	$UI/DeathScreen/ScoreValue.value = score
+	$UI/DeathScreen/WaveValue.value = wave
 	var beat_record := score > high_score
 	if beat_record:
 		high_score = score
@@ -342,7 +356,7 @@ func _save_high_score() -> void:
 
 
 func _refresh_high_score_label() -> void:
-	$UI/Menu/HighScoreValue.text = str(high_score)
+	$UI/Menu/HighScoreValue.value = high_score
 	$UI/Menu/HighScoreValue.visible = high_score > 0
 	$UI/Menu/HighScoreLabel.visible = high_score > 0
 
@@ -520,11 +534,13 @@ func _update_game(dt: float) -> void:
 			if player.dash_time > 0:
 				add_score(15)
 				spawn_hit_spark(c.position, 36.0)
+				spawn_critter_squish(c.position)
 				c.die()
 				player.hittedSomethingWhileDashing()
 				shake(50)
 			elif c.awake():
 				player.hit()
+				spawn_critter_squish(c.position)
 				c.die()
 				shake(100)
 				

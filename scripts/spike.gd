@@ -89,6 +89,7 @@ func _erupt(s: Dictionary) -> void:
 
 	for c in game.alive_critters():
 		if c.position.distance_to(wp) < ERUPT_RADIUS + c.radius:
+			game.spawn_critter_squish(c.position)
 			c.die()
 
 	for sn in game.alive_snakes():

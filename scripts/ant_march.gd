@@ -9,11 +9,13 @@ const TELEGRAPH := 1.7
 const LANES := 5
 const LANE_SPACING := 26.0
 const ANT_SPACING := 48.0
-const SPEED := 190.0
+const SPEED := 210.0
 const STREAM_LEN := 2600.0    # trail length; ~25-30s total with map crossing
 const ANT_RADIUS := 10.0
 const DRAW_SIZE := 34.0
-const EDGE_MARGIN := 80.0     # ants enter and leave fully off-screen
+# camera can see ~480px past the world edge when you hug the wall, so ants
+# must walk this far off the map before despawning to vanish off-canvas
+const EDGE_MARGIN := 560.0
 
 const TEX_FRAMES: Array[Texture2D] = [
 	preload("res://assets/ant_walk1.png"),
@@ -21,6 +23,7 @@ const TEX_FRAMES: Array[Texture2D] = [
 ]
 const TEX_WARN := preload("res://assets/spike_warn.png")
 const TEX_ARROW := preload("res://assets/spike_arrow.png")
+const TEX_SQUISH := preload("res://assets/ant_squish.png")
 
 const BAND_TINT := Color(0.12, 0.11, 0.10)
 
@@ -101,6 +104,7 @@ func update(dt: float) -> void:
 		if pl.dash_time > 0:
 			_squished[i] = 1
 			game.add_score(2)
+			game.spawn_squish(pos, TEX_SQUISH, 38.0)
 			game.spawn_burst(pos, BAND_TINT, 4)
 		else:
 			pl.hit()
