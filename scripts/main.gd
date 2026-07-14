@@ -521,9 +521,13 @@ func _update_game(dt: float) -> void:
 				add_score(15)
 				spawn_hit_spark(c.position, 36.0)
 				c.die()
+				player.hittedSomethingWhileDashing()
+				shake(50)
 			elif c.awake():
 				player.hit()
 				c.die()
+				shake(100)
+				
 
 	for p in alive_powerups():
 		if p.position.distance_to(player.position) < p.radius + player.radius:

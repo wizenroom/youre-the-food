@@ -91,9 +91,15 @@ func update(dt: float) -> void:
 	updateVignette(0.003)
 
 func updateVignette(delta: float) -> void:
-	var target := Color.RED if damaged else Color.BLACK
-	
+	var target := Color.BLACK
+
+	if successfulhit:
+		target = Color(0.228, 0.551, 0.316, 1.0)
+	elif damaged:
+		target = Color.RED
+
 	vignette_color = vignette_color.lerp(target, delta * 5.0)
+
 	vignette_mat.set_shader_parameter("vignette_color", vignette_color)
 
 
@@ -157,6 +163,7 @@ func hit() -> void:
 	lives -= 1
 	invuln = 2.0
 	hurt_flash = 2.0
+	
 	damaged = true
 	
 	game.spawn_hurt(position)
