@@ -44,14 +44,10 @@ shader = ExtResource("3_jscy8")
 shader_parameter/threshold = 0.1
 shader_parameter/growth = 0.0
 shader_parameter/transparency = 0.7
-shader_parameter/outline_size = 0.08
-shader_parameter/vein_threshold = 0.3
 shader_parameter/noise_scale = 0.5
 shader_parameter/warp_strength = 1.5
-shader_parameter/noise_speed = 1.0
-shader_parameter/outline_color = Vector3(0.15, 0.2, 0.16)
-shader_parameter/inside_color_1 = Vector3(0.2, 0.32, 0.22)
-shader_parameter/inside_color_2 = Vector3(0.12, 0.25, 0.18)
+shader_parameter/inside_color_1 = Color(0.2, 0.32, 0.22, 1)
+shader_parameter/inside_color_2 = Color(0, 0, 0, 0)
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_prt3j"]
 shader = ExtResource("20_gqmmt")
@@ -62,6 +58,8 @@ shader_parameter/strength = 0.3090000146775
 
 [sub_resource type="Environment" id="Environment_1edjn"]
 background_mode = 3
+ambient_light_source = 1
+ambient_light_color = Color(0.9429584, 0.5458319, 0.8735935, 1)
 glow_enabled = true
 glow_intensity = 4.59
 glow_bloom = 0.09
