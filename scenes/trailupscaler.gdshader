@@ -4,8 +4,8 @@ uniform float threshold = 0.5;
 uniform float growth = 0.0;
 uniform float transparency = 0.1;
 
-uniform float noise_scale = 0.5;
-uniform float warp_strength = 1.5;
+uniform float noise_scale = 0.1;
+uniform float warp_strength = 0.1;
 
 uniform vec4 inside_color_1 : source_color = vec4(0.20, 0.32, 0.22, 1.0);
 uniform vec4 inside_color_2 : source_color = vec4(0.0, 0.0, 0.0, 0.0);
@@ -81,7 +81,8 @@ void fragment() {
 	// Use the sprite's alpha directly as the threshold.
 	// Alpha = 1 -> threshold = 1 (almost no holes)
 	// Alpha = 0 -> threshold = 0 (all holes)
-	float local_threshold = texture(TEXTURE, UV).a;
+	float sprite_alpha = texture(TEXTURE, UV).a;
+	float local_threshold = pow(sprite_alpha, 1.5);
 
 	n = step(local_threshold, n);
 
@@ -89,6 +90,6 @@ void fragment() {
 
 	COLOR = vec4(
 		inside.rgb,
-		inside.a * outer * transparency
+		inside.a  * transparency
 	);
 }
