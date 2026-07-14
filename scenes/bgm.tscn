@@ -51,7 +51,6 @@ cache/0/26/0/scale = 1.0
 [sub_resource type="LabelSettings" id="LabelSettings_1edjn"]
 font = SubResource("FontFile_0ebda")
 font_size = 26
-font_color = Color(0.25871173, 0.120399185, 8.4228816e-08, 1)
 
 [node name="BGM" type="CanvasLayer" unique_id=1703786727]
 script = ExtResource("1_u4ddl")
@@ -72,8 +71,7 @@ grow_vertical = 2
 mouse_filter = 2
 
 [node name="Axiom" type="Label" parent="Control" unique_id=1728693441]
-visible = false
-modulate = Color(1, 1, 1, 0.26666668)
+modulate = Color(1, 1, 1, 0.8901961)
 layout_mode = 1
 anchors_preset = 3
 anchor_left = 1.0

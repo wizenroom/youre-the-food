@@ -270,7 +270,7 @@ func _draw() -> void:
 	if power == "pierce":
 		additionalsize = 10
 
-	Util.draw_shadow(self, Vector2.ZERO, 38 + additionalsize)
+	Util.draw_shadow(self, Vector2.ZERO, 50 + additionalsize)
 
 	# turbo: painted lightning streaks trailing behind the ball
 	if power == "turbo" and vel.length() > 40.0:
