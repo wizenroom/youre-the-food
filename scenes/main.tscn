@@ -21,7 +21,7 @@
 [ext_resource type="Texture2D" uid="uid://1gp16ungawnx" path="res://assets/ui_wave.png" id="17"]
 [ext_resource type="Texture2D" uid="uid://cnedibvbvrnje" path="res://assets/ui_grid.png" id="18"]
 [ext_resource type="Texture2D" uid="uid://bh26n0nur1hs4" path="res://assets/ui_highscore.png" id="19"]
-[ext_resource type="Shader" path="res://new_shader.gdshader" id="20_gqmmt"]
+[ext_resource type="Shader" uid="uid://j2kllg6fxtm4" path="res://new_shader.gdshader" id="20_gqmmt"]
 [ext_resource type="Script" uid="uid://bqf43yy8vxmru" path="res://scripts/painted_number.gd" id="21"]
 
 [sub_resource type="GDScript" id="GDScript_0ld40"]
@@ -43,7 +43,11 @@ shader = ExtResource("3_jscy8")
 shader_parameter/threshold = 0.1
 shader_parameter/growth = 0.0
 shader_parameter/trans = 0.6
+shader_parameter/outline_size = 0.08
 shader_parameter/vein_threshold = 0.3
+shader_parameter/noise_scale = 0.5
+shader_parameter/warp_strength = 1.5
+shader_parameter/noise_speed = 1.0
 shader_parameter/outline_color = Vector3(0.15, 0.2, 0.16)
 shader_parameter/inside_color_1 = Vector3(0.2, 0.32, 0.22)
 shader_parameter/inside_color_2 = Vector3(0.12, 0.25, 0.18)
