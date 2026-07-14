@@ -39,6 +39,8 @@ JOBS = [
      f"{ASSETS}\\critter_squish.png"),
     (f"{CURSOR_IMGS}\\c__Users_lenovo_AppData_Roaming_Cursor_User_workspaceStorage_empty-window_images_maceball-480e9889-fbf2-4cca-abc0-9e6ccd0ea038.png",
      f"{ASSETS}\\mace_ball.png"),
+    (f"{CURSOR_IMGS}\\c__Users_lenovo_AppData_Roaming_Cursor_User_workspaceStorage_empty-window_images_youasd-03cb9299-3fa1-418a-a538-bc2c129069e8.png",
+     f"{ASSETS}\\player_you.png"),
 ]
 
 _DIGIT_SRC = {
@@ -181,3 +183,26 @@ for src, dst in DIGIT_JOBS:
 _sq = f"{ASSETS}\\critter_squish.png"
 neutralize(Image.open(_sq).convert("RGBA")).save(_sq)
 print(f"{_sq}: neutralized")
+
+# player marker arrow — source is one full arrow; blue is a color remap
+_arrow_src = (f"{CURSOR_IMGS}\\c__Users_lenovo_AppData_Roaming_Cursor_User_workspaceStorage_"
+              f"empty-window_images_youarrow-4ca064dd-92a6-40d2-b4aa-6af64d452ad0.png")
+_arrow = remove_background(Image.open(_arrow_src).convert("RGB"))
+_arrow = _arrow.crop(_arrow.getbbox())
+crop = crop_square(_arrow)
+crop = crop.resize((OUT_SIZE, OUT_SIZE), Image.LANCZOS)
+crop.save(f"{ASSETS}\\player_arrow.png")
+print(f"{ASSETS}\\player_arrow.png: {crop.size}")
+
+blue = crop.copy()
+bpx = blue.load()
+for y in range(blue.size[1]):
+    for x in range(blue.size[0]):
+        r, g, b, a = bpx[x, y]
+        if a == 0:
+            continue
+        if r > 80 and r > b + 20:
+            bpx[x, y] = (max(0, int(r * 0.12)), max(0, int(g * 0.42)),
+                         min(255, int(r * 0.98)), a)
+blue.save(f"{ASSETS}\\player_arrow_blue.png")
+print(f"{ASSETS}\\player_arrow_blue.png: {blue.size}")

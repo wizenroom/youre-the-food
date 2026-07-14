@@ -160,7 +160,9 @@ func _process(delta):
 
 # pick a world-space point to steer toward
 func think() -> Vector2:
-	var d_player: float = game.player.position.distance_to(head)
+	var prey: Node2D = game.nearest_food_to(head)
+	var prey_pos: Vector2 = prey.position if prey != null else head
+	var d_prey: float = head.distance_to(prey_pos)
 
 	var pellet: Node2D = null
 	var pd := INF
@@ -185,25 +187,23 @@ func think() -> Vector2:
 
 	# back off after biting
 	if retreat > 0:
-		return head + (head - game.player.position)
+		return head + (head - prey_pos)
 
-	# mace snakes fight with the tail: circle the player to build swing
+	# mace snakes fight with the tail: circle the prey to build swing
 	# speed, and back off tail-first so the mace blocks incoming dashes
 	if kind == "mace":
 		_turn_mul = 1.8
-		if game.player.dash_time > 0 and d_player < 320:
-			return head + (head - game.player.position)
-		if d_player < 480:
+		if game.prey_dashing(prey) and d_prey < 320:
+			return head + (head - prey_pos)
+		if d_prey < 480:
 			boost = 1.25
-			var to_p: Vector2 = game.player.position - head
+			var to_p: Vector2 = prey_pos - head
 			var tangent: Vector2 = to_p.orthogonal().normalized() * _orbit_sign
-			# an orbit point past the player sweeps the tail across them
-			return game.player.position - to_p.normalized() * 190.0 \
-					+ tangent * 270.0
-		return game.player.position
+			return prey_pos - to_p.normalized() * 190.0 + tangent * 270.0
+		return prey_pos
 
 	# free food nearby beats everything
-	if pellet != null and pd < 220 and pd < d_player * 0.8:
+	if pellet != null and pd < 220 and pd < d_prey * 0.8:
 		return pellet.position
 
 	# aim ahead of a smaller snake so our body crosses its path
@@ -212,10 +212,10 @@ func think() -> Vector2:
 		var lead := minf(170, vd * 0.6)
 		return victim.head + Vector2.from_angle(victim.angle) * lead
 
-	# otherwise hunt the player
-	if d_player < 280:
+	# otherwise hunt the nearest apple
+	if d_prey < 280:
 		boost = 1.3
-	return game.player.position
+	return prey_pos
 
 
 func init_mace() -> void:

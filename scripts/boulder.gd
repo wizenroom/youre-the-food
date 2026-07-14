@@ -60,6 +60,10 @@ func _impact() -> void:
 	if pl != null and pl.position.distance_to(position) < IMPACT_RADIUS + pl.radius:
 		pl.hit()
 
+	for fp in game.alive_fake_players():
+		if fp.position.distance_to(position) < IMPACT_RADIUS + fp.radius:
+			fp.hit()
+
 	for c in game.alive_critters():
 		if c.position.distance_to(position) < IMPACT_RADIUS + c.radius:
 			game.spawn_critter_squish(c.position)

@@ -18,7 +18,9 @@ const BOULDER := preload("res://scripts/boulder.gd")
 const CRITTER := preload("res://scripts/critter.gd")
 const SPIKE := preload("res://scripts/spike.gd")
 const ANT_MARCH := preload("res://scripts/ant_march.gd")
+const FAKE_PLAYER := preload("res://scripts/fake_player.gd")
 const MAX_CRITTERS := 12
+const FAKE_COUNT := 4
 
 var state: State = State.MENU
 var score := 0
@@ -84,6 +86,7 @@ func start() -> void:
 	player = FoodPlayer.new()
 	$World/PlayerRoot.add_child(player)
 	player.setup(self, Vector2(WORLD_W / 2, WORLD_H / 2))
+	_spawn_fake_players()
 	score = 0
 	wave = 0
 	ant_timer = 12.0
@@ -99,7 +102,9 @@ func to_menu() -> void:
 
 
 func _clear_world() -> void:
-	for group in [$World/Snakes, $World/Pellets, $World/Powerups, $World/Splats, $World/Hazards, $World/Critters, $World/PlayerRoot]:
+	_ensure_fake_root()
+	for group in [$World/Snakes, $World/Pellets, $World/Powerups, $World/Splats,
+			$World/Hazards, $World/Critters, $World/PlayerRoot, $World/FakePlayers]:
 		for c in group.get_children():
 			if "dead" in c:
 				c.dead = true
@@ -267,6 +272,61 @@ func alive_snakes() -> Array:
 		if not s.dead:
 			out.append(s)
 	return out
+
+
+func _ensure_fake_root() -> Node2D:
+	if not has_node("World/FakePlayers"):
+		var n := Node2D.new()
+		n.name = "FakePlayers"
+		$World.add_child(n)
+	return $World/FakePlayers
+
+
+func _spawn_fake_players() -> void:
+	var root := _ensure_fake_root()
+	var names: Array = FakePlayer.NAMES.duplicate()
+	names.shuffle()
+	for i in FAKE_COUNT:
+		var fp: FakePlayer = FAKE_PLAYER.new()
+		root.add_child(fp)
+		fp.setup(
+			self,
+			Vector2(randf_range(280, WORLD_W - 280), randf_range(280, WORLD_H - 280)),
+			names[i % names.size()],
+			FakePlayer.TINTS[i % FakePlayer.TINTS.size()]
+		)
+
+
+func alive_fake_players() -> Array:
+	var out := []
+	for fp in $World/FakePlayers.get_children():
+		if not fp.dead:
+			out.append(fp)
+	return out
+
+
+func food_targets() -> Array:
+	var out: Array = []
+	if player != null:
+		out.append(player)
+	for fp in alive_fake_players():
+		out.append(fp)
+	return out
+
+
+func nearest_food_to(pos: Vector2) -> Node2D:
+	var best: Node2D = player
+	var best_d := INF
+	for t in food_targets():
+		var d: float = pos.distance_to(t.position)
+		if d < best_d:
+			best_d = d
+			best = t
+	return best
+
+
+func prey_dashing(prey: Node2D) -> bool:
+	return prey != null and "dash_time" in prey and prey.dash_time > 0.0
 
 
 func alive_critters() -> Array:
@@ -448,6 +508,8 @@ func _update_game(dt: float) -> void:
 	aim = get_global_mouse_position()
 
 	player.update(dt)
+	for fp in alive_fake_players():
+		fp.update(dt)
 	for s in alive_snakes():
 		s.update(dt)
 	for c in alive_critters():
@@ -527,7 +589,48 @@ func _update_game(dt: float) -> void:
 					player.vel *= -0.4
 					player.dash_time = 0
 				break
-		
+
+	# bot dash attacks use the same head/body rules as the player
+	var bot_dash_hits: Dictionary = {}
+	for fp: FakePlayer in alive_fake_players():
+		if fp.dash_time <= 0:
+			continue
+		for s in alive_snakes():
+			var head_hit: bool = s.hit_head(fp.position, fp.radius + 6)
+			var body_hit: int = s.hit_body(fp.position, fp.radius)
+
+			if body_hit >= 0 and s.is_armored_at(body_hit) and not head_hit:
+				$World/Effects.popup(fp.position + Vector2(0, -30), TEX_BLOCK)
+				fp.vel *= -0.55
+				fp.dash_time = 0
+				fp.invuln = maxf(fp.invuln, 0.4)
+				shake(30)
+				bot_dash_hits[fp] = true
+				break
+
+			if head_hit or (body_hit >= 0 and body_hit <= 2):
+				var boom: Vector2 = s.explode_head()
+				spawn_hit_spark(boom, 60.0)
+				var d := fp.position - boom
+				var dist := maxf(d.length(), 1.0)
+				fp.position += d / dist * 40.0
+				fp.invuln = maxf(fp.invuln, 0.5)
+				shake(30)
+				fp.vel *= -0.35
+				fp.dash_time = 0
+				bot_dash_hits[fp] = true
+				break
+
+			if body_hit >= 0:
+				s.cut_at(body_hit)
+				spawn_hit_spark(fp.position)
+				spawn_burst(fp.position, fp.tint, 12)
+				fp.invuln = maxf(fp.invuln, 0.3)
+				shake(30)
+				fp.vel *= -0.4
+				fp.dash_time = 0
+				bot_dash_hits[fp] = true
+				break
 
 	# mace balls: dashing into one gets blocked like armor, a fast swing
 	# deals a hit with knockback, a slow ball just shoves you around
@@ -535,40 +638,57 @@ func _update_game(dt: float) -> void:
 		if s.kind != "mace":
 			continue
 		var mp: Vector2 = s.mace_pos
-		if mp.distance_to(player.position) >= s.MACE_RADIUS + player.radius:
-			continue
-		var away: Vector2 = (player.position - mp).normalized()
-		if player.is_dashing:
-			$World/Effects.popup(player.position + Vector2(0, -30), TEX_BLOCK)
-			player.vel = away * 500.0
-			player.dash_time = 0
-			player.invuln = maxf(player.invuln, 0.4)
-			shake(50)
-		elif s.mace_speed() > 260.0 and s._mace_hit_cd <= 0:
-			s._mace_hit_cd = 0.6
-			player.hit()
-			player.vel = away * 560.0 + s.mace_vel * 0.4
-			shake(70)
-		else:
-			player.resolve_circle(mp, s.MACE_RADIUS)
-
-	# push out of bodies (neck counts as head)
-	for s in alive_snakes():
-		var neck_max: float = s.head_radius + s.seg_radius - 6
-		for seg: Vector2 in s.segments:
-			if seg.distance_to(s.head) < neck_max:
+		for prey in food_targets():
+			if mp.distance_to(prey.position) >= s.MACE_RADIUS + prey.radius:
 				continue
-			player.resolve_circle(seg, s.seg_radius)
-		player.resolve_circle(s.head, s.head_radius)
+			var away: Vector2 = (prey.position - mp).normalized()
+			if prey == player:
+				if player.is_dashing:
+					$World/Effects.popup(player.position + Vector2(0, -30), TEX_BLOCK)
+					player.vel = away * 500.0
+					player.dash_time = 0
+					player.invuln = maxf(player.invuln, 0.4)
+					shake(50)
+				elif s.mace_speed() > 260.0 and s._mace_hit_cd <= 0:
+					s._mace_hit_cd = 0.6
+					player.hit()
+					player.vel = away * 560.0 + s.mace_vel * 0.4
+					shake(70)
+				else:
+					player.resolve_circle(mp, s.MACE_RADIUS)
+			elif prey is FakePlayer:
+				if prey.dash_time > 0:
+					prey.vel = away * 500.0
+					prey.dash_time = 0
+					prey.invuln = maxf(prey.invuln, 0.4)
+					shake(30)
+				elif s.mace_speed() > 220.0 and prey.invuln <= 0:
+					prey.hit()
 
-	# head and body both hurt, unless the dash just connected
-	if not dash_hit:
+	# push everyone out of snake bodies (neck counts as head)
+	for prey in food_targets():
 		for s in alive_snakes():
-			var body_hit: int = s.hit_body(player.position, player.radius)
-			var head_hit: bool = s.hit_head(player.position, player.radius)
-			if body_hit >= 0 or head_hit:
-				player.hit()
-				shake(100)
+			var neck_max: float = s.head_radius + s.seg_radius - 6
+			for seg: Vector2 in s.segments:
+				if seg.distance_to(s.head) < neck_max:
+					continue
+				prey.resolve_circle(seg, s.seg_radius)
+			prey.resolve_circle(s.head, s.head_radius)
+
+	# head and body both hurt any apple, unless the dash just connected
+	if not dash_hit:
+		for prey in food_targets():
+			for s in alive_snakes():
+				var body_hit: int = s.hit_body(prey.position, prey.radius)
+				var head_hit: bool = s.hit_head(prey.position, prey.radius)
+				if body_hit < 0 and not head_hit:
+					continue
+				if prey == player:
+					player.hit()
+					shake(100)
+				elif prey is FakePlayer:
+					if not bot_dash_hits.get(prey, false):
+						prey.hit()
 				if head_hit:
 					s.retreat = 1.2
 				break
