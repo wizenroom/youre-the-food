@@ -39,6 +39,17 @@ var _tex: Texture2D = preload("res://assets/player.png")
 var _tex_streak: Texture2D = preload("res://assets/fx_speed_streak.png")
 var _tex_shield: Texture2D = preload("res://assets/powerup_shield.png")
 var _tex_pierce: Texture2D = preload("res://assets/powerup_pierce.png")
+
+var _applecrunch := preload("res://audio/apple_crunch.mp3")
+var _hard_hit := preload("res://audio/hard_hit.mp3")
+var _hit := preload("res://audio/hit.wav")
+var _small_crunch := preload("res://audio/small_crunch.wav")
+
+var damagedstream := AudioStreamPlayer.new()
+var crunchstream := AudioStreamPlayer.new()
+var hitstream := AudioStreamPlayer.new()
+var smallcrunch := AudioStreamPlayer.new()
+
 # the painted lightning points up-right at roughly this angle
 const STREAK_ART_ANGLE := 0.45
 
@@ -46,6 +57,17 @@ const STREAK_ART_ANGLE := 0.45
 func setup(g: Node, pos: Vector2) -> void:
 	game = g
 	position = pos
+	damagedstream.stream = _hard_hit
+	add_child(damagedstream)
+	
+	crunchstream.stream = _applecrunch
+	add_child(crunchstream)
+	
+	hitstream.stream = _hit
+	add_child(hitstream)
+	
+	smallcrunch.stream = _small_crunch
+	add_child(smallcrunch)
 
 
 func update(dt: float) -> void:
@@ -159,12 +181,12 @@ func dash() -> void:
 
 func hittedSomethingWhileDashing() -> void:
 	successfulhit = true
+	hitstream.play()
+	smallcrunch.play()
 	
 func hit() -> void:
 	if invuln > 0:
 		return
-	
-	
 	
 	if power == "shield":
 		power = ""
@@ -176,6 +198,9 @@ func hit() -> void:
 	hurt_flash = 2.0
 	
 	damaged = true
+	
+	hitstream.play()
+	crunchstream.play()
 	
 	game.spawn_hurt(position)
 	if lives <= 0:

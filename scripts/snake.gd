@@ -43,6 +43,10 @@ var _tex: Texture2D = preload("res://assets/snake_body.png")
 var _tex_armor: Texture2D = preload("res://assets/snake_armored.png")
 var _tex_mace: Texture2D = preload("res://assets/mace_ball.png")
 
+var _snake_hiss := preload("res://audio/snake_hiss.wav")
+
+var hit_sound := AudioStreamPlayer.new()
+
 var hit_offset := Vector2.ZERO
 var hit_velocity := Vector2.ZERO
 
@@ -60,6 +64,9 @@ func setup(g: Node, pos: Vector2, length: int, speed: float, turn: float, ang: f
 	turn_rate = turn
 	angle = ang
 	trail = [pos]
+	hit_sound.stream = _snake_hiss
+	add_child(hit_sound)
+	
 	for i in length:
 		segments.append(pos)
 
@@ -274,7 +281,7 @@ func hit_body(p: Vector2, r: float) -> int:
 			best_d = d
 			best = i
 	return best
-
+	
 
 func hit_head(p: Vector2, r: float) -> bool:
 	return p.distance_to(head) < r + head_radius
@@ -409,6 +416,8 @@ func hit(hitter_velocity: Vector2):
 	var direction := hitter_velocity.normalized()
 	var force := hitter_velocity.length() * 1
 	hit_velocity += direction * force
+	
+	hit_sound.play()
 	
 
 

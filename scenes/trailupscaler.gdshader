@@ -2,7 +2,7 @@ shader_type canvas_item;
 
 uniform float threshold = 0.5;
 uniform float growth = 0.0;
-uniform float trans = 0.1;
+uniform float transparency = 0.1;
 
 uniform float outline_size = 0.08;
 uniform float vein_threshold = 0.7;
@@ -98,5 +98,5 @@ void fragment() {
 	vec3 rgb = mix(outline_color, inside, inner);
 
 
-	COLOR = vec4(rgb, outer * trans);
+	COLOR = vec4(rgb, outer * transparency);
 }

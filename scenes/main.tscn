@@ -23,6 +23,7 @@
 [ext_resource type="Texture2D" uid="uid://bh26n0nur1hs4" path="res://assets/ui_highscore.png" id="19"]
 [ext_resource type="Shader" uid="uid://j2kllg6fxtm4" path="res://new_shader.gdshader" id="20_gqmmt"]
 [ext_resource type="Script" uid="uid://bqf43yy8vxmru" path="res://scripts/painted_number.gd" id="21"]
+[ext_resource type="PackedScene" uid="uid://ds0nvedauln3j" path="res://scenes/bgm.tscn" id="24_y6deb"]
 
 [sub_resource type="GDScript" id="GDScript_0ld40"]
 script/source = "extends Sprite2D
@@ -42,7 +43,7 @@ func _process(delta: float) -> void:
 shader = ExtResource("3_jscy8")
 shader_parameter/threshold = 0.1
 shader_parameter/growth = 0.0
-shader_parameter/trans = 0.6
+shader_parameter/transparency = 1.0
 shader_parameter/outline_size = 0.08
 shader_parameter/vein_threshold = 0.3
 shader_parameter/noise_scale = 0.5
@@ -61,6 +62,8 @@ shader_parameter/strength = 0.3090000146775
 
 [node name="Main" type="Node2D" unique_id=32625488]
 script = ExtResource("1")
+
+[node name="BGM" parent="." unique_id=1703786727 instance=ExtResource("24_y6deb")]
 
 [node name="World" type="Node2D" parent="." unique_id=464254647]
 
@@ -449,6 +452,7 @@ stretch_mode = 5
 script = ExtResource("4")
 
 [node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=1354053843]
+layer = 0
 
 [node name="ColorRect" type="ColorRect" parent="CanvasLayer" unique_id=1788035636]
 material = SubResource("ShaderMaterial_prt3j")
