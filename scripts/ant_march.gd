@@ -82,14 +82,14 @@ func update(dt: float) -> void:
 		queue_free()
 		return
 
-	var pl: Node2D = game.player
-	if pl == null:
-		return
-	# the whole swarm shares one line, so bail early when the player is
-	# nowhere near the band instead of testing every ant
 	var band_half := (LANES - 1) * 0.5 * LANE_SPACING + 10.0
-	var pdist := absf((pl.position - _entry).dot(_perp))
-	if pdist > band_half + pl.radius + ANT_RADIUS:
+	var anyone_near := false
+	for prey in game.food_targets():
+		if absf((prey.position - _entry).dot(_perp)) \
+				<= band_half + prey.radius + ANT_RADIUS:
+			anyone_near = true
+			break
+	if not anyone_near:
 		return
 
 	for i in _along.size():
@@ -99,15 +99,20 @@ func update(dt: float) -> void:
 		if d < 0.0 or d > _map_len:
 			continue
 		var pos := _entry + _dir * d + _perp * _off[i]
-		if pos.distance_to(pl.position) >= ANT_RADIUS + pl.radius:
-			continue
-		if pl.dash_time > 0:
-			_squished[i] = 1
-			game.add_score(2)
-			game.spawn_squish(pos, TEX_SQUISH, 38.0)
-			game.spawn_burst(pos, BAND_TINT, 4)
-		else:
-			pl.hit()
+		for prey in game.food_targets():
+			if pos.distance_to(prey.position) >= ANT_RADIUS + prey.radius:
+				continue
+			if game.prey_dashing(prey):
+				_squished[i] = 1
+				if prey == game.player:
+					game.add_score(2)
+				game.spawn_squish(pos, TEX_SQUISH, 38.0)
+				game.spawn_burst(pos, BAND_TINT, 4)
+			elif prey == game.player:
+				prey.hit()
+			elif prey is FakePlayer:
+				prey.hit()
+			break
 
 
 func _draw() -> void:

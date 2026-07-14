@@ -39,6 +39,8 @@ var _tex: Texture2D = preload("res://assets/player.png")
 var _tex_streak: Texture2D = preload("res://assets/fx_speed_streak.png")
 var _tex_shield: Texture2D = preload("res://assets/powerup_shield.png")
 var _tex_pierce: Texture2D = preload("res://assets/powerup_pierce.png")
+var _tex_you: Texture2D = preload("res://assets/player_you.png")
+var _tex_arrow: Texture2D = preload("res://assets/player_arrow.png")
 # the painted lightning points up-right at roughly this angle
 const STREAK_ART_ANGLE := 0.45
 
@@ -263,10 +265,12 @@ func _draw() -> void:
 	if dash_cooldown > 0:
 		var f := 1.0 - dash_cooldown / dash_cd_total
 		draw_arc(Vector2.ZERO, 27, -PI / 2, -PI / 2 + f * TAU, 40, Color(0.176, 0.204, 0.212, 0.45), 3.0)
-	
-	
-	
-	#if power == "turbo":
+
+	# painted YOU + arrow so you can spot yourself in the crowd
+	var mark_bob := sin(Time.get_ticks_msec() / 260.0) * 6.0
+	Util.draw_sprite(self, _tex_you, Vector2(0, -78 + mark_bob), 48)
+	# arrow art points down; anchor so the tip lands on the apple
+	Util.draw_sprite(self, _tex_arrow, Vector2(0, -52 + mark_bob * 0.4), 40)
 		#if is_dashing == true:
 			#var angle = (-vel).angle()
 			#var randrotatedvector = Vector2.from_angle(angle + (randf_range(-1,1) * (PI/4)))
