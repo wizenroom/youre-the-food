@@ -14,6 +14,10 @@ func _process(_dt: float) -> void:
 
 
 func _draw() -> void:
-	var bob := sin(Time.get_ticks_msec() / 300.0 + _phase) * 2.0
-	Util.draw_shadow(self, Vector2(0, 4), 16, 0.6)
-	Util.draw_sprite(self, _tex, Vector2(0, bob), 18)
+	var bob := sin(Time.get_ticks_msec() / 300.0 + _phase) * 10
+	
+	# shadow stays fixed
+	Util.draw_shadow(self, Vector2(0, 4), 25, 0.6)
+	
+	# sprite floats
+	Util.draw_sprite(self, _tex, Vector2(0, bob), 30)

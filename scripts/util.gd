@@ -33,13 +33,13 @@ static func draw_sprite(ci: CanvasItem, tex: Texture2D, pos: Vector2, size: floa
 
 
 # 2 layer shadow
-static func draw_shadow(ci: CanvasItem, pos: Vector2, size: float, strength := 1.0) -> void:
+static func draw_shadow(ci: CanvasItem, pos: Vector2, size: float, strength := 1.0, mod:Color = Color.WHITE) -> void:
 	if not shadows_enabled:
 		return
 	var tex := shadow_tex()
 	var o := pos + Vector2(size * 0.12, size * 0.34)
 	var ambient := Vector2(size * 1.6, size * 0.7)
 	var contact := Vector2(size * 0.95, size * 0.4)
-	ci.draw_texture_rect(tex, Rect2(o - ambient / 2.0, ambient), false, Color(1, 1, 1, 0.75 * strength))
+	ci.draw_texture_rect(tex, Rect2(o - ambient / 2.0, ambient), false, Color(mod.r,mod.g, mod.b, 0.75 * strength))
 	var co := o - Vector2(size * 0.04, size * 0.02)
-	ci.draw_texture_rect(tex, Rect2(co - contact / 2.0, contact), false, Color(1, 1, 1, 0.85 * strength))
+	ci.draw_texture_rect(tex, Rect2(co - contact / 2.0, contact), false, Color(mod.r,mod.g, mod.b, 0.85 * strength))

@@ -387,10 +387,10 @@ func paintTrail(pos) -> void:
 
 func _draw() -> void:
 	var mod := SPLITTER_TINT if kind == "splitter" else Color.WHITE
-	Util.draw_shadow(self, head, 42)
+	#Util.draw_shadow(self, head + hit_offset, 50,1,Color(5,-4,5))
 	
-	for s in segments:
-		Util.draw_shadow(self, s, 34)
+	#for s in segments:
+		#Util.draw_shadow(self, s + hit_offset, 40,1,Color(5,-4,5))
 
 	# mace rope and ball go under the body
 	if kind == "mace":

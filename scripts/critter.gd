@@ -65,8 +65,8 @@ func _draw() -> void:
 	# tremble while hatching
 	var shake := Vector2.ZERO
 	if not awake():
-		shake = Vector2(sin(age * 40.0), cos(age * 34.0)) * 1.5
-	Util.draw_shadow(self, Vector2(0, 4), size * 0.9, 0.6)
-	draw_set_transform(shake, sin(age * 9.0 + _wobble) * 0.2, Vector2.ONE)
+		shake = Vector2(sin(age * 40.0 *10), cos(age * 34.0 * 10)) * 1.5
+	Util.draw_shadow(self, Vector2(0, 4), size * 2, 1,Color(5,-4,5))
+	draw_set_transform(shake, sin(age * 4 * 5 + _wobble) * 1, Vector2.ONE)
 	Util.draw_sprite(self, _tex, Vector2.ZERO, size)
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
