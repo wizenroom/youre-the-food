@@ -43,6 +43,13 @@ var _tex: Texture2D = preload("res://assets/snake_body.png")
 var _tex_armor: Texture2D = preload("res://assets/snake_armored.png")
 var _tex_mace: Texture2D = preload("res://assets/mace_ball.png")
 
+var hit_offset := Vector2.ZERO
+var hit_velocity := Vector2.ZERO
+
+@export var hit_spring := 100.0
+@export var hit_damping := 8.0
+
+
 @onready var trail_painter := get_tree().current_scene.get_node("World/Background2/TrailPainter")
 
 
@@ -138,6 +145,10 @@ func update(dt: float) -> void:
 			game.spawn_burst(p.position, Color("ffd32a"), 3)
 
 	queue_redraw()
+	
+	
+func _process(delta):
+	update_hit_offset(delta)
 
 
 # pick a world-space point to steer toward
@@ -389,7 +400,24 @@ func _draw() -> void:
 
 	for i in range(segments.size() - 1, -1, -1):
 		var tex := _tex_armor if is_armored_at(i) else _tex
-		Util.draw_sprite(self, tex, segments[i], 34, mod)
+		Util.draw_sprite(self, tex, segments[i] + hit_offset, 34, mod)
 		paintTrail(segments[i])
-	Util.draw_sprite(self, _tex, head, 42, mod)  # same orb, bigger
+	Util.draw_sprite(self, _tex, head + hit_offset, 42, mod)  # same orb, bigger
 	paintTrail(head)
+	
+func hit(hitter_velocity: Vector2):
+	var direction := hitter_velocity.normalized()
+	var force := hitter_velocity.length() * 1
+	hit_velocity += direction * force
+	
+
+
+func update_hit_offset(delta: float):
+	# spring pulling back to zero
+	hit_velocity += -hit_offset * hit_spring * delta
+	
+	# damping
+	hit_velocity *= exp(-hit_damping * delta)
+	
+	# move offset
+	hit_offset += hit_velocity * delta

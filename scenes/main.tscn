@@ -42,7 +42,7 @@ func _process(delta: float) -> void:
 shader = ExtResource("3_jscy8")
 shader_parameter/threshold = 0.1
 shader_parameter/growth = 0.0
-shader_parameter/trans = 0.7
+shader_parameter/trans = 0.6
 shader_parameter/vein_threshold = 0.3
 shader_parameter/outline_color = Vector3(0.15, 0.2, 0.16)
 shader_parameter/inside_color_1 = Vector3(0.2, 0.32, 0.22)
