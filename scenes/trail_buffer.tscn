@@ -1,0 +1,21 @@
+[gd_scene format=3 uid="uid://cuo3h3kvjd8i8"]
+
+[ext_resource type="Shader" uid="uid://j2kllg6fxtm4" path="res://new_shader.gdshader" id="1_3mrhk"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_prt3j"]
+shader = ExtResource("1_3mrhk")
+
+[node name="TrailBuffer" type="Node2D" unique_id=1308301282]
+
+[node name="SubViewport" type="SubViewport" parent="." unique_id=1597518174]
+disable_3d = true
+size = Vector2i(1024, 512)
+render_target_clear_mode = 1
+
+[node name="ColorRect" type="ColorRect" parent="SubViewport" unique_id=2054584080]
+material = SubResource("ShaderMaterial_prt3j")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2

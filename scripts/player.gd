@@ -1,6 +1,12 @@
 class_name FoodPlayer
 extends Node2D
 
+
+@onready var vignette: ColorRect = get_tree().current_scene.get_node("CanvasLayer/ColorRect")
+@onready var vignette_mat: ShaderMaterial = vignette.material as ShaderMaterial
+var vignette_color: Color = Color.BLACK
+
+
 var game: Node
 
 var vel := Vector2.ZERO
@@ -25,6 +31,8 @@ var _shouldproduceddashparticle = false
 var _lastdashcount = 0
 
 var successfulhit = false
+
+var damaged = false
 
 var _tex: Texture2D = preload("res://assets/player.png")
 
@@ -77,10 +85,21 @@ func update(dt: float) -> void:
 		
 	updateDashVar()
 	tryProduceDashParticle()
-	
 	updateSuccessfulhit()
-	
 	queue_redraw()
+	updateDamaged()
+	updateVignette(0.003)
+
+func updateVignette(delta: float) -> void:
+	var target := Color.RED if damaged else Color.BLACK
+	
+	vignette_color = vignette_color.lerp(target, delta * 5.0)
+	vignette_mat.set_shader_parameter("vignette_color", vignette_color)
+
+
+func updateDamaged() -> void:
+	if invuln <= 0:
+		damaged = false
 
 func updateSuccessfulhit() -> void:
 	if invuln <= 0:
@@ -127,6 +146,9 @@ func hittedSomethingWhileDashing() -> void:
 func hit() -> void:
 	if invuln > 0:
 		return
+	
+	
+	
 	if power == "shield":
 		power = ""
 		invuln = 1.2
@@ -135,6 +157,8 @@ func hit() -> void:
 	lives -= 1
 	invuln = 2.0
 	hurt_flash = 2.0
+	damaged = true
+	
 	game.spawn_hurt(position)
 	if lives <= 0:
 		game.game_over()
