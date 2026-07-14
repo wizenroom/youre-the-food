@@ -352,7 +352,7 @@ func _update_game(dt: float) -> void:
 
 	# dash attacks. hits near the head count as head hits, otherwise the
 	# neck shields it forever and cutting there wipes the whole body
-	if player.dash_time > 0:
+	if player.is_dashing:
 		for s in alive_snakes():
 			var head_hit: bool = s.hit_head(player.position, player.radius + 6)
 			var body_hit: int = s.hit_body(player.position, player.radius)
@@ -363,6 +363,7 @@ func _update_game(dt: float) -> void:
 				player.vel *= -0.55
 				player.dash_time = 0
 				player.invuln = maxf(player.invuln, 0.4)
+				player.hittedSomethingWhileDashing()
 				dash_hit = true  # no bite on the same touch
 				break
 
@@ -375,6 +376,7 @@ func _update_game(dt: float) -> void:
 				player.position += d / dist * 40.0
 				player.invuln = maxf(player.invuln, 0.5)
 				dash_hit = true
+				player.hittedSomethingWhileDashing()
 				if player.power != "pierce":
 					player.vel *= -0.35
 					player.dash_time = 0
@@ -386,6 +388,7 @@ func _update_game(dt: float) -> void:
 				spawn_burst(player.position, Color("2ed573"), 12)
 				player.invuln = maxf(player.invuln, 0.3)
 				dash_hit = true
+				player.hittedSomethingWhileDashing()
 				if player.power != "pierce":
 					player.vel *= -0.4
 					player.dash_time = 0
