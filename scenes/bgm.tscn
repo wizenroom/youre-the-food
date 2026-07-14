@@ -5,6 +5,9 @@
 [ext_resource type="AudioStream" uid="uid://bobfpkb0p6loq" path="res://audio/BGM/Out of the Blue.mp3" id="3_dg162"]
 
 [sub_resource type="FontFile" id="FontFile_0ebda"]
+subpixel_positioning = 0
+msdf_pixel_range = 14
+msdf_size = 128
 cache/0/variation_coordinates = {}
 cache/0/face_index = 0
 cache/0/embolden = 0.0
