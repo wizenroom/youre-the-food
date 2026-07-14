@@ -15,6 +15,8 @@ const TEX_HURT := preload("res://assets/fx_hurt.png")
 const SAVE_PATH := "user://highscore.cfg"
 const BOULDER := preload("res://scripts/boulder.gd")
 const CRITTER := preload("res://scripts/critter.gd")
+const SPIKE := preload("res://scripts/spike.gd")
+const ANT_MARCH := preload("res://scripts/ant_march.gd")
 const MAX_CRITTERS := 12
 
 var state: State = State.MENU
@@ -28,6 +30,8 @@ var grid_enabled := true
 var player: FoodPlayer = null
 var aim := Vector2.ZERO      
 var boulder_timer := 0.0     # countdown to the next rock drop
+var spike_timer := 0.0       # countdown to the next spike row
+var ant_timer := 12.0        # countdown to the next ant march
 var high_score := 0
 var high_wave := 0
 
@@ -69,6 +73,7 @@ func start() -> void:
 	player.setup(self, Vector2(WORLD_W / 2, WORLD_H / 2))
 	score = 0
 	wave = 0
+	ant_timer = 12.0
 	set_state(State.PLAYING)
 	camera.position = player.position
 	camera.reset_smoothing()
@@ -96,6 +101,7 @@ func next_wave() -> void:
 	wave_banner = 2.0
 	wave_timer = wave_duration
 	boulder_timer = 3.0
+	spike_timer = 5.0
 	var count := mini(1 + wave, 5)
 	var spawned: Array[SnakeEnemy] = []
 	for i in count:
@@ -168,6 +174,55 @@ func _update_boulders(dt: float) -> void:
 	b.position = target
 	$World/Hazards.add_child(b)
 	b.setup(self)
+
+
+# spike rows from wave 3 on
+func _update_spikes(dt: float) -> void:
+	if wave < 3:
+		return
+	spike_timer -= dt
+	if spike_timer > 0:
+		return
+	spike_timer = maxf(8.0 - wave * 0.4, 3.5) * (0.8 + randf() * 0.4)
+
+	# near the player, but never right underneath — the row does the chasing
+	var origin: Vector2 = player.position \
+			+ Vector2.from_angle(randf() * TAU) * (140.0 + randf() * 220.0)
+	origin.x = clampf(origin.x, 120, WORLD_W - 120)
+	origin.y = clampf(origin.y, 120, WORLD_H - 120)
+
+	# one of the 4 cardinals, or two at once from wave 5
+	var cardinals: Array[Vector2] = [
+		Vector2.RIGHT, Vector2.LEFT, Vector2.DOWN, Vector2.UP,
+	]
+	cardinals.shuffle()
+	var dirs: Array[Vector2] = [cardinals[0]]
+	if wave >= 5 and randf() < 0.4:
+		dirs.append(cardinals[1])
+
+	var sp := SPIKE.new()
+	sp.position = origin
+	$World/Hazards.add_child(sp)
+	sp.setup(self, dirs, 4 + mini(floori(wave / 3.0), 3))
+
+
+# a very long ant march from wave 4 on, one at a time
+func _update_ants(dt: float) -> void:
+	if wave < 4:
+		return
+	for c in $World/Hazards.get_children():
+		if c is ANT_MARCH and not c.dead:
+			return
+	ant_timer -= dt
+	if ant_timer > 0:
+		return
+	ant_timer = 26.0 + randf() * 14.0
+
+	var horizontal := randf() < 0.5
+	var band := randf_range(220.0, (WORLD_H if horizontal else WORLD_W) - 220.0)
+	var m := ANT_MARCH.new()
+	$World/Hazards.add_child(m)
+	m.setup(self, horizontal, randf() < 0.5, band)
 
 
 func alive_snakes() -> Array:
@@ -339,6 +394,8 @@ func _update_game(dt: float) -> void:
 	for sp in $World/Splats.get_children():
 		sp.update(dt)
 	_update_boulders(dt)
+	_update_spikes(dt)
+	_update_ants(dt)
 	for b in $World/Hazards.get_children():
 		if not b.dead:
 			b.update(dt)
