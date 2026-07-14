@@ -503,6 +503,7 @@ func _process(delta: float) -> void:
 		offset = Vector2.ZERO
 
 
+
 func _update_game(dt: float) -> void:
 	wave_banner = maxf(0, wave_banner - dt)
 	aim = get_global_mouse_position()
@@ -548,6 +549,11 @@ func _update_game(dt: float) -> void:
 			# armor blocks the dash, even pierce
 			if body_hit >= 0 and s.is_armored_at(body_hit) and not head_hit:
 				$World/Effects.popup(player.position + Vector2(0, -30), TEX_BLOCK)
+				if s.willdie():
+					slowtime(0.2,0.2)
+				else:
+					slowtime(0.1, 0.2)
+				
 				s.hit(player.vel)
 				player.vel *= -0.55
 				player.dash_time = 0
@@ -559,6 +565,11 @@ func _update_game(dt: float) -> void:
 				break
 
 			if head_hit or (body_hit >= 0 and body_hit <= 2):
+				if s.willdie():
+					slowtime(0.2,0.2)
+				else:
+					slowtime(0.1, 0.2)
+					
 				s.hit(player.vel)
 				var boom: Vector2 = s.explode_head()
 				spawn_hit_spark(boom, 60.0)
@@ -577,6 +588,11 @@ func _update_game(dt: float) -> void:
 				break
 
 			if body_hit >= 0:
+				if s.willdie():
+					slowtime(0.2,0.2)
+				else:
+					slowtime(0.1, 0.2)
+					
 				s.hit(player.vel)
 				s.cut_at(body_hit)
 				spawn_hit_spark(player.position)
@@ -714,6 +730,8 @@ func _update_game(dt: float) -> void:
 	for c in alive_critters():
 		if c.position.distance_to(player.position) < c.radius + player.radius:
 			if player.dash_time > 0:
+				freezeframe(0.05)
+				
 				add_score(15)
 				spawn_hit_spark(c.position, 36.0)
 				spawn_critter_squish(c.position)
@@ -749,3 +767,14 @@ func _update_game(dt: float) -> void:
 # CAMERA SHAKE
 func shake(amount: float) -> void:
 	shake_strength = max(shake_strength, amount)
+	
+func slowtime(lenght:float, speed:float):
+	print("SLOWING TIME", lenght, speed)
+	Engine.time_scale = speed
+	await get_tree().create_timer(lenght, true, false, true).timeout
+	Engine.time_scale = 1.0
+
+func freezeframe(time:float):
+	Engine.time_scale = 0.0
+	await get_tree().create_timer(time, true, false, true).timeout
+	Engine.time_scale = 1.0

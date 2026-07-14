@@ -4,7 +4,10 @@ extends Node2D
 
 @onready var vignette: ColorRect = get_tree().current_scene.get_node("CanvasLayer/ColorRect")
 @onready var vignette_mat: ShaderMaterial = vignette.material as ShaderMaterial
+
 var vignette_color: Color = Color.BLACK
+
+@onready var main = get_tree().current_scene
 
 #@onready var trail_painter := get_tree().current_scene.get_node("World/Background2/TrailPainter")
 
@@ -192,6 +195,8 @@ func dash() -> void:
 	updateLastDashCount()
 	
 	dashstream.play()
+	main.shake(50)
+	
 	
 	
 
@@ -199,6 +204,7 @@ func hittedSomethingWhileDashing() -> void:
 	successfulhit = true
 	hitstream.play()
 	smallcrunch.play()
+	#main.freezeframe(0.05)
 	
 func hit() -> void:
 	if invuln > 0:

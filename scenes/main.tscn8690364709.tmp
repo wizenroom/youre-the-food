@@ -1,0 +1,483 @@
+[gd_scene format=3 uid="uid://cn6bqmsd06evt"]
+
+[ext_resource type="Script" uid="uid://chbldhu35dr64" path="res://scripts/main.gd" id="1"]
+[ext_resource type="Script" uid="uid://bqor5uflo5khq" path="res://scripts/grid.gd" id="2"]
+[ext_resource type="Script" uid="uid://btjod0xiy3swo" path="res://scripts/hud.gd" id="3"]
+[ext_resource type="Shader" uid="uid://bjrljmqucngu7" path="res://scenes/trailupscaler.gdshader" id="3_jscy8"]
+[ext_resource type="Script" uid="uid://dkrj7088wvgx2" path="res://scripts/ui_scale_button.gd" id="4"]
+[ext_resource type="Script" uid="uid://clvtt17kf1aaq" path="res://scripts/effects.gd" id="5"]
+[ext_resource type="Script" uid="uid://drjgnasclqee8" path="res://scenes/trail_painter.gd" id="5_yc10j"]
+[ext_resource type="Texture2D" uid="uid://u5xycarr7ien" path="res://assets/canvas.png" id="6"]
+[ext_resource type="Texture2D" uid="uid://dmhwpdm1syca4" path="res://assets/logo.png" id="7"]
+[ext_resource type="Texture2D" uid="uid://cr7881nbhbvph" path="res://assets/ui_play.png" id="8"]
+[ext_resource type="Texture2D" uid="uid://01b5cevcctod" path="res://assets/ui_options.png" id="9"]
+[ext_resource type="Texture2D" uid="uid://b8t1k6kndkkj6" path="res://assets/ui_paused.png" id="10"]
+[ext_resource type="Texture2D" uid="uid://cgwky4tsoxfrw" path="res://assets/ui_youdied.png" id="11"]
+[ext_resource type="Texture2D" uid="uid://dn284fnqaq57c" path="res://assets/ui_restart.png" id="12"]
+[ext_resource type="Texture2D" uid="uid://duh1i188o6cjj" path="res://assets/ui_back.png" id="13"]
+[ext_resource type="Texture2D" uid="uid://b03p31wt0wgyg" path="res://assets/ui_shadows.png" id="14"]
+[ext_resource type="Texture2D" uid="uid://d4icgakjk0rxi" path="res://assets/ui_on.png" id="15"]
+[ext_resource type="Texture2D" uid="uid://dmeh2s4uucey6" path="res://assets/ui_score.png" id="16"]
+[ext_resource type="Texture2D" uid="uid://1gp16ungawnx" path="res://assets/ui_wave.png" id="17"]
+[ext_resource type="Texture2D" uid="uid://cnedibvbvrnje" path="res://assets/ui_grid.png" id="18"]
+[ext_resource type="Texture2D" uid="uid://bh26n0nur1hs4" path="res://assets/ui_highscore.png" id="19"]
+[ext_resource type="Shader" uid="uid://j2kllg6fxtm4" path="res://new_shader.gdshader" id="20_gqmmt"]
+[ext_resource type="Script" uid="uid://bqf43yy8vxmru" path="res://scripts/painted_number.gd" id="21"]
+[ext_resource type="PackedScene" uid="uid://ds0nvedauln3j" path="res://scenes/bgm.tscn" id="24_y6deb"]
+
+[sub_resource type="GDScript" id="GDScript_0ld40"]
+script/source = "extends Sprite2D
+
+
+# Called when the node enters the scene tree for the first time.
+func _ready() -> void:
+	pass # Replace with function body.
+
+
+# Called every frame. 'delta' is the elapsed time since the previous frame.
+func _process(delta: float) -> void:
+	pass
+"
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_yc10j"]
+shader = ExtResource("3_jscy8")
+shader_parameter/threshold = 0.1
+shader_parameter/growth = 0.0
+shader_parameter/transparency = 0.7
+shader_parameter/noise_scale = 0.5
+shader_parameter/warp_strength = 1.5
+shader_parameter/inside_color_1 = Color(0.2, 0.32, 0.22, 1)
+shader_parameter/inside_color_2 = Color(0, 0, 0, 0)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_prt3j"]
+shader = ExtResource("20_gqmmt")
+shader_parameter/vignette_color = Color(0, 0, 0, 1)
+shader_parameter/radius = 0.3750000178125
+shader_parameter/softness = 1.0
+shader_parameter/strength = 0.3090000146775
+
+[sub_resource type="Environment" id="Environment_1edjn"]
+background_mode = 3
+ambient_light_source = 1
+ambient_light_color = Color(0.9429584, 0.5458319, 0.8735935, 1)
+glow_enabled = true
+glow_intensity = 4.59
+glow_bloom = 0.09
+glow_hdr_threshold = 4.0
+glow_hdr_scale = 4.0
+glow_hdr_luminance_cap = 11.29
+fog_light_color = Color(0.96128863, 0.70326245, 0.75216687, 1)
+fog_light_energy = 6.73
+fog_sun_scatter = 8.75
+fog_density = 1.005
+fog_height = 942.76
+adjustment_enabled = true
+adjustment_contrast = 1.1
+adjustment_saturation = 1.1
+
+[node name="Main" type="Node2D" unique_id=32625488]
+script = ExtResource("1")
+
+[node name="BGM" parent="." unique_id=1703786727 instance=ExtResource("24_y6deb")]
+
+[node name="World" type="Node2D" parent="." unique_id=464254647]
+
+[node name="Background2" type="Sprite2D" parent="World" unique_id=578415228]
+modulate = Color(0.33858034, 0.19579157, 0.034477092, 1)
+texture_repeat = 2
+position = Vector2(-512, -512)
+texture = ExtResource("6")
+centered = false
+region_enabled = true
+region_rect = Rect2(0, 0, 3904, 2944)
+script = SubResource("GDScript_0ld40")
+
+[node name="TrailPainter" type="Sprite2D" parent="World/Background2" unique_id=1852615803]
+texture_filter = 2
+material = SubResource("ShaderMaterial_yc10j")
+position = Vector2(512, 512)
+centered = false
+region_enabled = true
+region_rect = Rect2(0, 0, 3904, 2944)
+script = ExtResource("5_yc10j")
+decay = 0.999
+trail_scale = 16
+
+[node name="Grid" type="Node2D" parent="World" unique_id=756642514]
+script = ExtResource("2")
+
+[node name="Splats" type="Node2D" parent="World" unique_id=618598205]
+
+[node name="Pellets" type="Node2D" parent="World" unique_id=755991483]
+
+[node name="Powerups" type="Node2D" parent="World" unique_id=58039527]
+
+[node name="Snakes" type="Node2D" parent="World" unique_id=1459128462]
+
+[node name="Critters" type="Node2D" parent="World" unique_id=1459128464]
+
+[node name="Hazards" type="Node2D" parent="World" unique_id=1459128463]
+
+[node name="PlayerRoot" type="Node2D" parent="World" unique_id=102879051]
+
+[node name="Effects" type="Node2D" parent="World" unique_id=1764797344]
+script = ExtResource("5")
+
+[node name="Camera" type="Camera2D" parent="." unique_id=311054071]
+position = Vector2(480, 320)
+limit_left = 0
+limit_top = 0
+limit_right = 2880
+limit_bottom = 1920
+position_smoothing_enabled = true
+position_smoothing_speed = 6.0
+
+[node name="UI" type="CanvasLayer" parent="." unique_id=400942119]
+
+[node name="HUD" type="Control" parent="UI" unique_id=604344304]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("3")
+
+[node name="Menu" type="Control" parent="UI" unique_id=1373065077]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 7.0
+offset_top = 6.0
+offset_right = 7.0
+offset_bottom = 6.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Logo" type="TextureRect" parent="UI/Menu" unique_id=700040088]
+layout_mode = 0
+offset_left = 290.0
+offset_top = 48.0
+offset_right = 670.0
+offset_bottom = 363.0
+mouse_filter = 2
+texture = ExtResource("7")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="PlayButton" type="TextureButton" parent="UI/Menu" unique_id=796987524]
+layout_mode = 0
+offset_left = 375.0
+offset_top = 378.0
+offset_right = 585.0
+offset_bottom = 544.0
+texture_normal = ExtResource("8")
+ignore_texture_size = true
+stretch_mode = 5
+script = ExtResource("4")
+
+[node name="HighScoreLabel" type="TextureRect" parent="UI/Menu" unique_id=700040089]
+visible = false
+layout_mode = 0
+offset_left = 28.0
+offset_top = 30.0
+offset_right = 188.0
+offset_bottom = 150.0
+mouse_filter = 2
+texture = ExtResource("19")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="HighScoreValue" type="Control" parent="UI/Menu" unique_id=700040090]
+visible = false
+anchors_preset = 0
+offset_left = 28.0
+offset_top = 152.0
+offset_right = 188.0
+offset_bottom = 188.0
+mouse_filter = 2
+script = ExtResource("21")
+digit_height = 40.0
+centered = true
+
+[node name="OptionsButton" type="TextureButton" parent="UI/Menu" unique_id=1275171362]
+layout_mode = 0
+offset_left = 380.0
+offset_top = 542.0
+offset_right = 580.0
+offset_bottom = 618.0
+texture_normal = ExtResource("9")
+ignore_texture_size = true
+stretch_mode = 5
+script = ExtResource("4")
+
+[node name="OptionsMenu" type="Control" parent="UI" unique_id=658260125]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Title" type="TextureRect" parent="UI/OptionsMenu" unique_id=1316096427]
+layout_mode = 0
+offset_left = 265.0
+offset_top = 88.0
+offset_right = 695.0
+offset_bottom = 252.0
+mouse_filter = 2
+texture = ExtResource("9")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ShadowsLabel" type="TextureRect" parent="UI/OptionsMenu" unique_id=1019203131]
+layout_mode = 0
+offset_left = 280.0
+offset_top = 266.0
+offset_right = 540.0
+offset_bottom = 394.0
+mouse_filter = 2
+texture = ExtResource("14")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="StateIcon" type="TextureRect" parent="UI/OptionsMenu" unique_id=1068332076]
+layout_mode = 0
+offset_left = 560.0
+offset_top = 275.0
+offset_right = 670.0
+offset_bottom = 385.0
+mouse_filter = 2
+texture = ExtResource("15")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ShadowsButton" type="TextureButton" parent="UI/OptionsMenu" unique_id=654512601]
+layout_mode = 0
+offset_left = 260.0
+offset_top = 280.0
+offset_right = 700.0
+offset_bottom = 380.0
+ignore_texture_size = true
+stretch_mode = 5
+
+[node name="GridLabel" type="TextureRect" parent="UI/OptionsMenu" unique_id=1019203132]
+layout_mode = 0
+offset_left = 280.0
+offset_top = 376.0
+offset_right = 540.0
+offset_bottom = 504.0
+mouse_filter = 2
+texture = ExtResource("18")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="GridStateIcon" type="TextureRect" parent="UI/OptionsMenu" unique_id=1068332077]
+layout_mode = 0
+offset_left = 560.0
+offset_top = 385.0
+offset_right = 670.0
+offset_bottom = 495.0
+mouse_filter = 2
+texture = ExtResource("15")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="GridButton" type="TextureButton" parent="UI/OptionsMenu" unique_id=654512602]
+layout_mode = 0
+offset_left = 260.0
+offset_top = 390.0
+offset_right = 700.0
+offset_bottom = 490.0
+ignore_texture_size = true
+stretch_mode = 5
+
+[node name="BackButton" type="TextureButton" parent="UI/OptionsMenu" unique_id=1738988677]
+layout_mode = 0
+offset_left = 385.0
+offset_top = 492.0
+offset_right = 575.0
+offset_bottom = 628.0
+texture_normal = ExtResource("13")
+ignore_texture_size = true
+stretch_mode = 5
+script = ExtResource("4")
+
+[node name="PauseMenu" type="Control" parent="UI" unique_id=807436586]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Dim" type="ColorRect" parent="UI/PauseMenu" unique_id=1456905043]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(1, 1, 1, 0.65)
+
+[node name="Title" type="TextureRect" parent="UI/PauseMenu" unique_id=623939927]
+layout_mode = 0
+offset_left = 270.0
+offset_top = 103.0
+offset_right = 690.0
+offset_bottom = 357.0
+mouse_filter = 2
+texture = ExtResource("10")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="RestartButton" type="TextureButton" parent="UI/PauseMenu" unique_id=653043083]
+layout_mode = 0
+offset_left = 360.0
+offset_top = 382.0
+offset_right = 600.0
+offset_bottom = 528.0
+texture_normal = ExtResource("12")
+ignore_texture_size = true
+stretch_mode = 5
+script = ExtResource("4")
+
+[node name="BackButton" type="TextureButton" parent="UI/PauseMenu" unique_id=2107129801]
+layout_mode = 0
+offset_left = 385.0
+offset_top = 492.0
+offset_right = 575.0
+offset_bottom = 628.0
+texture_normal = ExtResource("13")
+ignore_texture_size = true
+stretch_mode = 5
+script = ExtResource("4")
+
+[node name="DeathScreen" type="Control" parent="UI" unique_id=455947468]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Dim" type="ColorRect" parent="UI/DeathScreen" unique_id=164138729]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(1, 1, 1, 0.65)
+
+[node name="Title" type="TextureRect" parent="UI/DeathScreen" unique_id=2085272536]
+layout_mode = 0
+offset_left = 347.0
+offset_top = 35.0
+offset_right = 613.0
+offset_bottom = 355.0
+mouse_filter = 2
+texture = ExtResource("11")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ScoreLabel" type="TextureRect" parent="UI/DeathScreen" unique_id=260431944]
+layout_mode = 0
+offset_left = 300.0
+offset_top = 326.0
+offset_right = 400.0
+offset_bottom = 398.0
+mouse_filter = 2
+texture = ExtResource("16")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ScoreValue" type="Control" parent="UI/DeathScreen" unique_id=413953787]
+anchors_preset = 0
+offset_left = 408.0
+offset_top = 345.0
+offset_right = 548.0
+offset_bottom = 379.0
+mouse_filter = 2
+script = ExtResource("21")
+digit_height = 34.0
+
+[node name="WaveLabel" type="TextureRect" parent="UI/DeathScreen" unique_id=1245935151]
+layout_mode = 0
+offset_left = 504.0
+offset_top = 333.0
+offset_right = 599.0
+offset_bottom = 391.0
+mouse_filter = 2
+texture = ExtResource("17")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="WaveValue" type="Control" parent="UI/DeathScreen" unique_id=850790345]
+anchors_preset = 0
+offset_left = 606.0
+offset_top = 345.0
+offset_right = 700.0
+offset_bottom = 379.0
+mouse_filter = 2
+script = ExtResource("21")
+digit_height = 34.0
+
+[node name="NewBest" type="Label" parent="UI/DeathScreen" unique_id=1574003857]
+visible = false
+layout_mode = 0
+offset_left = 660.0
+offset_top = 345.0
+offset_right = 960.0
+offset_bottom = 379.0
+theme_override_colors/font_color = Color(0.839, 0.537, 0.063, 1)
+theme_override_font_sizes/font_size = 26
+text = "NEW BEST!"
+vertical_alignment = 1
+
+[node name="RestartButton" type="TextureButton" parent="UI/DeathScreen" unique_id=1574003856]
+layout_mode = 0
+offset_left = 360.0
+offset_top = 412.0
+offset_right = 600.0
+offset_bottom = 558.0
+texture_normal = ExtResource("12")
+ignore_texture_size = true
+stretch_mode = 5
+script = ExtResource("4")
+
+[node name="BackButton" type="TextureButton" parent="UI/DeathScreen" unique_id=690929547]
+layout_mode = 0
+offset_left = 420.0
+offset_top = 554.0
+offset_right = 540.0
+offset_bottom = 640.0
+texture_normal = ExtResource("13")
+ignore_texture_size = true
+stretch_mode = 5
+script = ExtResource("4")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=1354053843]
+layer = 0
+
+[node name="ColorRect" type="ColorRect" parent="CanvasLayer" unique_id=1788035636]
+material = SubResource("ShaderMaterial_prt3j")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1756356748]
+environment = SubResource("Environment_1edjn")
