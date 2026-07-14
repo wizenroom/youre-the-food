@@ -43,6 +43,17 @@ var _tex: Texture2D = preload("res://assets/snake_body.png")
 var _tex_armor: Texture2D = preload("res://assets/snake_armored.png")
 var _tex_mace: Texture2D = preload("res://assets/mace_ball.png")
 
+var _snake_hiss := preload("res://audio/snake_hiss.wav")
+
+var hit_sound := AudioStreamPlayer.new()
+
+var hit_offset := Vector2.ZERO
+var hit_velocity := Vector2.ZERO
+
+@export var hit_spring := 100.0
+@export var hit_damping := 8.0
+
+
 @onready var trail_painter := get_tree().current_scene.get_node("World/Background2/TrailPainter")
 
 
@@ -53,6 +64,9 @@ func setup(g: Node, pos: Vector2, length: int, speed: float, turn: float, ang: f
 	turn_rate = turn
 	angle = ang
 	trail = [pos]
+	hit_sound.stream = _snake_hiss
+	add_child(hit_sound)
+	
 	for i in length:
 		segments.append(pos)
 
@@ -138,6 +152,10 @@ func update(dt: float) -> void:
 			game.spawn_burst(p.position, Color("ffd32a"), 3)
 
 	queue_redraw()
+	
+	
+func _process(delta):
+	update_hit_offset(delta)
 
 
 # pick a world-space point to steer toward
@@ -263,7 +281,7 @@ func hit_body(p: Vector2, r: float) -> int:
 			best_d = d
 			best = i
 	return best
-
+	
 
 func hit_head(p: Vector2, r: float) -> bool:
 	return p.distance_to(head) < r + head_radius
@@ -369,10 +387,10 @@ func paintTrail(pos) -> void:
 
 func _draw() -> void:
 	var mod := SPLITTER_TINT if kind == "splitter" else Color.WHITE
-	Util.draw_shadow(self, head, 42)
+	#Util.draw_shadow(self, head + hit_offset, 50,1,Color(5,-4,5))
 	
-	for s in segments:
-		Util.draw_shadow(self, s, 34)
+	#for s in segments:
+		#Util.draw_shadow(self, s + hit_offset, 40,1,Color(5,-4,5))
 
 	# mace rope and ball go under the body
 	if kind == "mace":
@@ -389,7 +407,26 @@ func _draw() -> void:
 
 	for i in range(segments.size() - 1, -1, -1):
 		var tex := _tex_armor if is_armored_at(i) else _tex
-		Util.draw_sprite(self, tex, segments[i], 34, mod)
+		Util.draw_sprite(self, tex, segments[i] + hit_offset, 34, mod)
 		paintTrail(segments[i])
-	Util.draw_sprite(self, _tex, head, 42, mod)  # same orb, bigger
+	Util.draw_sprite(self, _tex, head + hit_offset, 42, mod)  # same orb, bigger
 	paintTrail(head)
+	
+func hit(hitter_velocity: Vector2):
+	var direction := hitter_velocity.normalized()
+	var force := hitter_velocity.length() * 1
+	hit_velocity += direction * force
+	
+	hit_sound.play()
+	
+
+
+func update_hit_offset(delta: float):
+	# spring pulling back to zero
+	hit_velocity += -hit_offset * hit_spring * delta
+	
+	# damping
+	hit_velocity *= exp(-hit_damping * delta)
+	
+	# move offset
+	hit_offset += hit_velocity * delta

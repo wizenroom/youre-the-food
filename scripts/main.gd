@@ -42,6 +42,8 @@ var shake_strength := 0.0
 var shake_decay := 100.0
 var offset := Vector2.ZERO
 
+var _point := preload("res://audio/Point.wav")
+var pointstream := AudioStreamPlayer.new() 
 
 @onready var camera: Camera2D = $Camera
 @onready var hud: Control = $UI/HUD
@@ -60,6 +62,11 @@ func _ready() -> void:
 	$UI/DeathScreen/BackButton.pressed.connect(to_menu)
 	_load_high_score()
 	set_state(State.MENU)
+	
+	pointstream.stream = _point
+	add_child(pointstream)
+	
+	pointstream.volume_db = 6
 
 
 func set_state(s: State) -> void:
@@ -348,6 +355,9 @@ func alive_powerups() -> Array:
 
 func add_score(n: int) -> void:
 	score += n
+	print("Addedpoints")
+	pointstream.play()
+	
 
 
 func spawn_burst(pos: Vector2, color: Color, count: int) -> void:
@@ -531,21 +541,25 @@ func _update_game(dt: float) -> void:
 	# neck shields it forever and cutting there wipes the whole body
 	if player.is_dashing:
 		for s in alive_snakes():
+			
 			var head_hit: bool = s.hit_head(player.position, player.radius + 6)
 			var body_hit: int = s.hit_body(player.position, player.radius)
 
 			# armor blocks the dash, even pierce
 			if body_hit >= 0 and s.is_armored_at(body_hit) and not head_hit:
 				$World/Effects.popup(player.position + Vector2(0, -30), TEX_BLOCK)
+				s.hit(player.vel)
 				player.vel *= -0.55
 				player.dash_time = 0
 				player.invuln = maxf(player.invuln, 0.4)
 				shake(50)
 				player.hittedSomethingWhileDashing()
 				dash_hit = true  # no bite on the same touch
+				
 				break
 
 			if head_hit or (body_hit >= 0 and body_hit <= 2):
+				s.hit(player.vel)
 				var boom: Vector2 = s.explode_head()
 				spawn_hit_spark(boom, 60.0)
 				# shove clear so the damage check can't re-trigger
@@ -556,12 +570,14 @@ func _update_game(dt: float) -> void:
 				shake(50)
 				dash_hit = true
 				player.hittedSomethingWhileDashing()
+				
 				if player.power != "pierce":
 					player.vel *= -0.35
 					player.dash_time = 0
 				break
 
 			if body_hit >= 0:
+				s.hit(player.vel)
 				s.cut_at(body_hit)
 				spawn_hit_spark(player.position)
 				spawn_burst(player.position, Color("2ed573"), 12)
