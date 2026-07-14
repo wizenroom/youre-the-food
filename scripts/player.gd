@@ -1,6 +1,12 @@
 class_name FoodPlayer
 extends Node2D
 
+
+@onready var vignette: ColorRect = get_tree().current_scene.get_node("CanvasLayer/ColorRect")
+@onready var vignette_mat: ShaderMaterial = vignette.material as ShaderMaterial
+var vignette_color: Color = Color.BLACK
+
+
 var game: Node
 
 var vel := Vector2.ZERO
@@ -25,6 +31,8 @@ var _shouldproduceddashparticle = false
 var _lastdashcount = 0
 
 var successfulhit = false
+
+var damaged = false
 
 var _tex: Texture2D = preload("res://assets/player.png")
 
@@ -77,10 +85,27 @@ func update(dt: float) -> void:
 		
 	updateDashVar()
 	tryProduceDashParticle()
-	
 	updateSuccessfulhit()
-	
 	queue_redraw()
+	updateDamaged()
+	updateVignette(0.003)
+
+func updateVignette(delta: float) -> void:
+	var target := Color.BLACK
+
+	if successfulhit:
+		target = Color(0.228, 0.551, 0.316, 1.0)
+	elif damaged:
+		target = Color.RED
+
+	vignette_color = vignette_color.lerp(target, delta * 5.0)
+
+	vignette_mat.set_shader_parameter("vignette_color", vignette_color)
+
+
+func updateDamaged() -> void:
+	if invuln <= 0:
+		damaged = false
 
 func updateSuccessfulhit() -> void:
 	if invuln <= 0:
@@ -124,12 +149,12 @@ func dash() -> void:
 func hittedSomethingWhileDashing() -> void:
 	successfulhit = true
 	
-	
-	
-
 func hit() -> void:
 	if invuln > 0:
 		return
+	
+	
+	
 	if power == "shield":
 		power = ""
 		invuln = 1.2
@@ -138,6 +163,9 @@ func hit() -> void:
 	lives -= 1
 	invuln = 2.0
 	hurt_flash = 2.0
+	
+	damaged = true
+	
 	game.spawn_hurt(position)
 	if lives <= 0:
 		game.game_over()
@@ -180,9 +208,17 @@ func _draw() -> void:
 		return
 	# red tint for the first moments after losing a life
 	var mod := Color.WHITE
-	if hurt_flash > 1.5:
-		mod = Color(1.0, 0.45, 0.45)
-	Util.draw_shadow(self, Vector2.ZERO, 38)
+	var additionalsize = 0
+	if hurt_flash > 0:
+		mod = Color(4.0, 0.45, 0.45)
+		
+	if successfulhit == true:
+		mod = Color(2, 8, 0.5)
+		
+	if power == "pierce":
+		additionalsize = 10
+	
+	Util.draw_shadow(self, Vector2.ZERO, 38+additionalsize)
 	
 	if power == "turbo":
 		var randvector = (-vel).rotated(randf_range(-PI/10, PI/10))
@@ -190,7 +226,8 @@ func _draw() -> void:
 		draw_line(Vector2.ZERO, randvector, Color.CYAN, 10)
 	
 	draw_set_transform(Vector2.ZERO, roll, Vector2.ONE)
-	Util.draw_sprite(self, _tex, Vector2.ZERO, 38, mod)
+	Util.draw_sprite(self, _tex, Vector2.ZERO, 38+additionalsize, mod)
+	
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	if power == "shield":
 		draw_arc(Vector2.ZERO, radius + 7, 0, TAU, 40, Color(0.2, 0.5, 0.2, 0.9), 8)

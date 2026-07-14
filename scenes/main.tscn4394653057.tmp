@@ -158,7 +158,6 @@ text = "0"
 horizontal_alignment = 1
 
 [node name="OptionsButton" type="TextureButton" parent="UI/Menu" unique_id=1275171362]
-visible = false
 layout_mode = 0
 offset_left = 380.0
 offset_top = 542.0

@@ -35,6 +35,11 @@ var ant_timer := 12.0        # countdown to the next ant march
 var high_score := 0
 var high_wave := 0
 
+var shake_strength := 0.0
+var shake_decay := 100.0
+var offset := Vector2.ZERO
+
+
 @onready var camera: Camera2D = $Camera
 @onready var hud: Control = $UI/HUD
 
@@ -378,6 +383,17 @@ func _process(delta: float) -> void:
 			_update_game(dt)
 			if state != State.MENU:  # game_over may have fired mid-update
 				hud.update_hud()
+	
+	
+	if shake_strength > 0.0:
+		offset = Vector2(
+			randf_range(-shake_strength, shake_strength),
+			randf_range(-shake_strength, shake_strength)
+		)
+
+		shake_strength = move_toward(shake_strength, 0.0, shake_decay * delta)
+	else:
+		offset = Vector2.ZERO
 
 
 func _update_game(dt: float) -> void:
@@ -400,8 +416,13 @@ func _update_game(dt: float) -> void:
 		if not b.dead:
 			b.update(dt)
 	$World/Effects.update(dt)
-
-	camera.position = player.position
+	
+	var viewport_size = get_viewport_rect().size
+	var mouse = get_viewport().get_mouse_position()
+	var relative = mouse - viewport_size / 2.0
+	var cammouseoffset = relative * 0.1
+	
+	camera.position = player.position + cammouseoffset + offset
 
 	# --- collisions ---
 
@@ -420,6 +441,7 @@ func _update_game(dt: float) -> void:
 				player.vel *= -0.55
 				player.dash_time = 0
 				player.invuln = maxf(player.invuln, 0.4)
+				shake(50)
 				player.hittedSomethingWhileDashing()
 				dash_hit = true  # no bite on the same touch
 				break
@@ -432,6 +454,7 @@ func _update_game(dt: float) -> void:
 				var dist := maxf(d.length(), 1.0)
 				player.position += d / dist * 40.0
 				player.invuln = maxf(player.invuln, 0.5)
+				shake(50)
 				dash_hit = true
 				player.hittedSomethingWhileDashing()
 				if player.power != "pierce":
@@ -444,12 +467,14 @@ func _update_game(dt: float) -> void:
 				spawn_hit_spark(player.position)
 				spawn_burst(player.position, Color("2ed573"), 12)
 				player.invuln = maxf(player.invuln, 0.3)
+				shake(50)
 				dash_hit = true
 				player.hittedSomethingWhileDashing()
 				if player.power != "pierce":
 					player.vel *= -0.4
 					player.dash_time = 0
 				break
+		
 
 	# push out of bodies (neck counts as head)
 	for s in alive_snakes():
@@ -467,6 +492,7 @@ func _update_game(dt: float) -> void:
 			var head_hit: bool = s.hit_head(player.position, player.radius)
 			if body_hit >= 0 or head_hit:
 				player.hit()
+				shake(100)
 				if head_hit:
 					s.retreat = 1.2
 				break
@@ -495,9 +521,13 @@ func _update_game(dt: float) -> void:
 				add_score(15)
 				spawn_hit_spark(c.position, 36.0)
 				c.die()
+				player.hittedSomethingWhileDashing()
+				shake(50)
 			elif c.awake():
 				player.hit()
 				c.die()
+				shake(100)
+				
 
 	for p in alive_powerups():
 		if p.position.distance_to(player.position) < p.radius + player.radius:
@@ -516,3 +546,8 @@ func _update_game(dt: float) -> void:
 	wave_timer -= dt
 	if alive_snakes().is_empty() or wave_timer <= 0:
 		next_wave()
+		
+		
+# CAMERA SHAKE
+func shake(amount: float) -> void:
+	shake_strength = max(shake_strength, amount)
