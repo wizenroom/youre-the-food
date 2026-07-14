@@ -178,7 +178,7 @@ func _draw() -> void:
 	# red tint for the first moments after losing a life
 	var mod := Color.WHITE
 	var additionalsize = 0
-	if hurt_flash > 1.5:
+	if hurt_flash > 0:
 		mod = Color(4.0, 0.45, 0.45)
 		
 	if successfulhit == true:
