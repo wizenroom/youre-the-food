@@ -7,13 +7,13 @@ var texture_image: ImageTexture
 const SIZE := Vector2i(3904, 2944)
 
 @export var decay: float = 0.99
-@export var trail_scale: int = 16
+@export var trail_scale: int = 8
 
 var TRAIL_SIZE := SIZE / trail_scale
 
 func _ready():
 	image = Image.create(TRAIL_SIZE.x, TRAIL_SIZE.y, false, Image.FORMAT_RGBA8)
-	image.fill(Color.TRANSPARENT)
+	image.fill(Color(0,0,0,0))
 
 	texture_image = ImageTexture.create_from_image(image)
 	texture = texture_image

@@ -40,7 +40,9 @@ func _process(delta: float) -> void:
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_yc10j"]
 shader = ExtResource("3_jscy8")
-shader_parameter/threshold = 0.01
+shader_parameter/threshold = 0.1
+shader_parameter/growth = 0.0
+shader_parameter/trans = 0.3
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_prt3j"]
 shader = ExtResource("20_gqmmt")
@@ -71,6 +73,8 @@ centered = false
 region_enabled = true
 region_rect = Rect2(0, 0, 3904, 2944)
 script = ExtResource("5_yc10j")
+decay = 0.999
+trail_scale = 16
 
 [node name="Grid" type="Node2D" parent="World" unique_id=756642514]
 script = ExtResource("2")

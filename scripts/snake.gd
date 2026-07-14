@@ -28,6 +28,8 @@ var segments: Array[Vector2] = []
 var _tex: Texture2D = preload("res://assets/snake_body.png")
 var _tex_armor: Texture2D = preload("res://assets/snake_armored.png")
 
+@onready var trail_painter := get_tree().current_scene.get_node("World/Background2/TrailPainter")
+
 
 func setup(g: Node, pos: Vector2, length: int, speed: float, turn: float, ang: float) -> void:
 	game = g
@@ -277,13 +279,19 @@ func die(killer: SnakeEnemy) -> void:
 		killer.grow(3)
 	queue_free()
 
+func paintTrail(pos) -> void:
+	trail_painter.stamp(pos, 15)
+	#print("Stamping at ", global_position)
 
 func _draw() -> void:
 	var mod := SPLITTER_TINT if kind == "splitter" else Color.WHITE
 	Util.draw_shadow(self, head, 42)
+	
 	for s in segments:
 		Util.draw_shadow(self, s, 34)
 	for i in range(segments.size() - 1, -1, -1):
 		var tex := _tex_armor if is_armored_at(i) else _tex
 		Util.draw_sprite(self, tex, segments[i], 34, mod)
+		paintTrail(segments[i])
 	Util.draw_sprite(self, _tex, head, 42, mod)  # same orb, bigger
+	paintTrail(head)

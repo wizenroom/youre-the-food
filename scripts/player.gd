@@ -6,7 +6,7 @@ extends Node2D
 @onready var vignette_mat: ShaderMaterial = vignette.material as ShaderMaterial
 var vignette_color: Color = Color.BLACK
 
-@onready var trail_painter := get_tree().current_scene.get_node("World/Background2/TrailPainter")
+#@onready var trail_painter := get_tree().current_scene.get_node("World/Background2/TrailPainter")
 
 var game: Node
 
@@ -95,10 +95,10 @@ func update(dt: float) -> void:
 	queue_redraw()
 	updateDamaged()
 	updateVignette(0.003)
-	paintPlayerTrail()
+	#paintPlayerTrail()
 
-func paintPlayerTrail() -> void:
-	trail_painter.stamp(global_position, 1)
+#func paintPlayerTrail() -> void:
+	#trail_painter.stamp(global_position, 1)
 	#print("Stamping at ", global_position)
 
 func updateVignette(delta: float) -> void:
