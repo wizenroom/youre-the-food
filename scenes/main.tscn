@@ -3,8 +3,10 @@
 [ext_resource type="Script" uid="uid://chbldhu35dr64" path="res://scripts/main.gd" id="1"]
 [ext_resource type="Script" uid="uid://bqor5uflo5khq" path="res://scripts/grid.gd" id="2"]
 [ext_resource type="Script" uid="uid://btjod0xiy3swo" path="res://scripts/hud.gd" id="3"]
+[ext_resource type="Shader" uid="uid://bjrljmqucngu7" path="res://scenes/trailupscaler.gdshader" id="3_jscy8"]
 [ext_resource type="Script" uid="uid://dkrj7088wvgx2" path="res://scripts/ui_scale_button.gd" id="4"]
 [ext_resource type="Script" uid="uid://clvtt17kf1aaq" path="res://scripts/effects.gd" id="5"]
+[ext_resource type="Script" uid="uid://drjgnasclqee8" path="res://scenes/trail_painter.gd" id="5_yc10j"]
 [ext_resource type="Texture2D" uid="uid://u5xycarr7ien" path="res://assets/canvas.png" id="6"]
 [ext_resource type="Texture2D" uid="uid://dmhwpdm1syca4" path="res://assets/logo.png" id="7"]
 [ext_resource type="Texture2D" uid="uid://cr7881nbhbvph" path="res://assets/ui_play.png" id="8"]
@@ -36,6 +38,10 @@ func _process(delta: float) -> void:
 	pass
 "
 
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_yc10j"]
+shader = ExtResource("3_jscy8")
+shader_parameter/threshold = 0.01
+
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_prt3j"]
 shader = ExtResource("20_gqmmt")
 shader_parameter/vignette_color = Color(0, 0, 0, 1)
@@ -56,6 +62,15 @@ centered = false
 region_enabled = true
 region_rect = Rect2(0, 0, 3904, 2944)
 script = SubResource("GDScript_0ld40")
+
+[node name="TrailPainter" type="Sprite2D" parent="World/Background2" unique_id=1852615803]
+texture_filter = 2
+material = SubResource("ShaderMaterial_yc10j")
+position = Vector2(512, 512)
+centered = false
+region_enabled = true
+region_rect = Rect2(0, 0, 3904, 2944)
+script = ExtResource("5_yc10j")
 
 [node name="Grid" type="Node2D" parent="World" unique_id=756642514]
 script = ExtResource("2")
