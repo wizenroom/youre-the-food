@@ -75,6 +75,8 @@ func set_state(s: State) -> void:
 	$UI/OptionsMenu.visible = s == State.OPTIONS
 	$UI/PauseMenu.visible = s == State.PAUSED
 	$UI/DeathScreen.visible = s == State.GAMEOVER
+	$UI/MenuBlur.visible = s != State.PLAYING
+	$UI/MenuBlurBuffer.visible = s != State.PLAYING
 	hud.visible = s != State.MENU and s != State.OPTIONS
 	if s == State.MENU or s == State.OPTIONS:
 		camera.position = Vector2(VIEW_W / 2, VIEW_H / 2)
