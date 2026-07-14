@@ -29,6 +29,13 @@ float noise(vec2 uv) {
                      dot( random(uv_index + vec2(1.0,1.0) ), uv_fract - vec2(1.0,1.0) ), blur.x), blur.y) + 0.5;
 }
 
+vec2 warp(vec2 uv) {
+	float x = noise(uv + vec2(10.0, 20.0));
+	float y = noise(uv + vec2(30.0, 40.0));
+	
+	return vec2(x, y) - 0.5;
+}
+
 void fragment() {
 	vec2 p = TEXTURE_PIXEL_SIZE;
 
@@ -53,10 +60,17 @@ void fragment() {
 	float outer = step(current_threshold, a);
 	float inner = step(current_threshold + 0.08, a);
 
-	vec2 noise_uv = UV / TEXTURE_PIXEL_SIZE * 0.5 + vec2(TIME * 1.0, TIME * 0.2);
-
 	// Convert 0→1 into 1→0→1
-	float n = abs(noise(noise_uv) * 2.0 - 1.0);
+	vec2 noise_uv = UV / TEXTURE_PIXEL_SIZE * 0.5;
+
+	// Create moving distortion
+	vec2 offset = warp(noise_uv + TIME * 0.2);
+
+	// Apply warp
+	noise_uv += offset * 3.0;
+
+	// Sample warped noise
+	float n = abs(noise(noise_uv + vec2(TIME * 0.5, TIME * 0.2)) * 2.0 - 1.0);
 	n = step(vein_threshold, n);
 
 	vec3 inside = mix(inside_color_1, inside_color_2, n);
