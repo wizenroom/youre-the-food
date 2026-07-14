@@ -37,6 +37,8 @@ JOBS = [
      f"{ASSETS}\\ant_squish.png"),
     (f"{CURSOR_IMGS}\\c__Users_lenovo_AppData_Roaming_Cursor_User_workspaceStorage_empty-window_images_cutesquish-c3d6408b-7965-4c05-84ef-64e74a952602.png",
      f"{ASSETS}\\critter_squish.png"),
+    (f"{CURSOR_IMGS}\\c__Users_lenovo_AppData_Roaming_Cursor_User_workspaceStorage_empty-window_images_maceball-480e9889-fbf2-4cca-abc0-9e6ccd0ea038.png",
+     f"{ASSETS}\\mace_ball.png"),
 ]
 
 _DIGIT_SRC = {

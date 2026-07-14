@@ -8,7 +8,7 @@ const MAX_SNAKES := 10
 const SPLITTER_TINT := Color(1.25, 0.7, 1.3)
 
 var game: Node
-var kind := "normal"          # normal armored splitter, add more types later
+var kind := "normal"          # normal, armored, splitter, mace
 
 var head := Vector2.ZERO
 var angle := 0.0
@@ -20,6 +20,20 @@ var dead := false
 var boost := 1.0
 var retreat := 0.0            # backing off after a bite
 var grace := 0.0              # no team kills right after splitting
+var _turn_mul := 1.0          # mace snakes spin harder when attacking
+
+# mace tail weapon (kind == "mace")
+const MACE_ROPE := 84.0
+const MACE_RADIUS := 17.0
+const MACE_DRAW := 52.0
+const MACE_MAX_SPEED := 950.0
+var mace_pos := Vector2.ZERO
+var mace_vel := Vector2.ZERO
+var mace_rot := 0.0
+var _mace_hit_cd := 0.0       # so one swing can't multi-hit the player
+var _orbit_sign := 1.0        # which way we circle the player
+var _orbit_swap := 2.5        # countdown to flipping the swing direction
+var _mace_prev := Vector2.ZERO  # ball position last frame (verlet)
 
 # past head positions, segments sit along this
 var trail: Array[Vector2] = []
@@ -27,6 +41,7 @@ var segments: Array[Vector2] = []
 
 var _tex: Texture2D = preload("res://assets/snake_body.png")
 var _tex_armor: Texture2D = preload("res://assets/snake_armored.png")
+var _tex_mace: Texture2D = preload("res://assets/mace_ball.png")
 
 @onready var trail_painter := get_tree().current_scene.get_node("World/Background2/TrailPainter")
 
@@ -45,6 +60,13 @@ func setup(g: Node, pos: Vector2, length: int, speed: float, turn: float, ang: f
 func update(dt: float) -> void:
 	retreat = maxf(0, retreat - dt)
 	grace = maxf(0, grace - dt)
+	_mace_hit_cd = maxf(0, _mace_hit_cd - dt)
+	if kind == "mace":
+		_orbit_swap -= dt
+		if _orbit_swap <= 0:
+			_orbit_sign *= -1.0
+			_orbit_swap = randf_range(1.6, 3.0)
+	_turn_mul = 1.0
 	var target := think()
 
 	# steer toward target, away from other snakes and walls
@@ -70,7 +92,7 @@ func update(dt: float) -> void:
 		dir.y -= (1 - (game.WORLD_H - head.y) / m) * 2
 
 	var diff := wrapf(dir.angle() - angle, -PI, PI)
-	var max_turn := turn_rate * dt
+	var max_turn := turn_rate * _turn_mul * dt
 	angle += clampf(diff, -max_turn, max_turn)
 
 	head += Vector2.from_angle(angle) * (base_speed * boost * dt)
@@ -103,6 +125,9 @@ func update(dt: float) -> void:
 		if ln > max_len:
 			trail.resize(i + 2)
 			break
+
+	if kind == "mace":
+		_update_mace(dt)
 
 	# eat pellets near the head
 	for p in game.alive_pellets():
@@ -144,6 +169,21 @@ func think() -> Vector2:
 	if retreat > 0:
 		return head + (head - game.player.position)
 
+	# mace snakes fight with the tail: circle the player to build swing
+	# speed, and back off tail-first so the mace blocks incoming dashes
+	if kind == "mace":
+		_turn_mul = 1.8
+		if game.player.dash_time > 0 and d_player < 320:
+			return head + (head - game.player.position)
+		if d_player < 480:
+			boost = 1.25
+			var to_p: Vector2 = game.player.position - head
+			var tangent: Vector2 = to_p.orthogonal().normalized() * _orbit_sign
+			# an orbit point past the player sweeps the tail across them
+			return game.player.position - to_p.normalized() * 190.0 \
+					+ tangent * 270.0
+		return game.player.position
+
 	# free food nearby beats everything
 	if pellet != null and pd < 220 and pd < d_player * 0.8:
 		return pellet.position
@@ -158,6 +198,48 @@ func think() -> Vector2:
 	if d_player < 280:
 		boost = 1.3
 	return game.player.position
+
+
+func init_mace() -> void:
+	mace_pos = _mace_anchor() + Vector2.from_angle(randf() * TAU) * MACE_ROPE
+	_mace_prev = mace_pos
+
+
+func _mace_anchor() -> Vector2:
+	return segments[segments.size() - 1] if segments.size() > 0 else head
+
+
+func mace_speed() -> float:
+	return mace_vel.length()
+
+
+# verlet ball on a rope: carry last frame's motion, then clamp to rope
+# length. The constraint converts the tail's pull into a tangential whip
+# on its own, which is what makes the flailing look right.
+func _update_mace(dt: float) -> void:
+	var anchor := _mace_anchor()
+	var step := mace_pos - _mace_prev
+	_mace_prev = mace_pos
+	mace_pos += step * 0.985             # tiny drag so it settles when idle
+
+	var d := mace_pos - anchor
+	var dist := d.length()
+	if dist > MACE_ROPE:
+		mace_pos = anchor + d / dist * MACE_ROPE
+
+	mace_vel = (mace_pos - _mace_prev) / maxf(dt, 0.0001)
+	if mace_vel.length() > MACE_MAX_SPEED:
+		mace_pos = _mace_prev + mace_vel.normalized() * MACE_MAX_SPEED * dt
+		mace_vel = mace_vel.normalized() * MACE_MAX_SPEED
+
+	mace_rot += mace_vel.length() * dt / 30.0
+
+	# the ball crushes critters it plows through
+	if mace_speed() > 90.0:
+		for c in game.alive_critters():
+			if c.position.distance_to(mace_pos) < MACE_RADIUS + c.radius:
+				game.spawn_critter_squish(c.position)
+				c.die()
 
 
 func grow(n: int) -> void:
@@ -188,6 +270,8 @@ func hit_head(p: Vector2, r: float) -> bool:
 
 
 func is_armored_at(index: int) -> bool:
+	if kind == "mace":
+		return true  # fully plated; only head hits work
 	return kind == "armored" and index % 2 == 0
 
 
@@ -289,6 +373,20 @@ func _draw() -> void:
 	
 	for s in segments:
 		Util.draw_shadow(self, s, 34)
+
+	# mace rope and ball go under the body
+	if kind == "mace":
+		var anchor := _mace_anchor()
+		Util.draw_shadow(self, mace_pos, MACE_DRAW * 0.8)
+		var links := 5
+		for i in links:
+			var t := (i + 1.0) / (links + 1.0)
+			var p := anchor.lerp(mace_pos, t)
+			draw_circle(p, 3.5, Color(0.13, 0.12, 0.11))
+		draw_set_transform(mace_pos, mace_rot, Vector2.ONE)
+		Util.draw_sprite(self, _tex_mace, Vector2.ZERO, MACE_DRAW)
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+
 	for i in range(segments.size() - 1, -1, -1):
 		var tex := _tex_armor if is_armored_at(i) else _tex
 		Util.draw_sprite(self, tex, segments[i], 34, mod)

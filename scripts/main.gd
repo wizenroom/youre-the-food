@@ -112,6 +112,15 @@ func next_wave() -> void:
 	var spawned: Array[SnakeEnemy] = []
 	for i in count:
 		spawned.append(spawn_snake())
+	# from wave 3 on, every wave is guaranteed a mace swinger
+	if wave >= 3 and not _has_mace_snake():
+		var pool: Array[SnakeEnemy] = []
+		for s in spawned:
+			if s.kind == "normal":
+				pool.append(s)
+		if pool.is_empty():
+			pool = spawned  # all rolled variants; overwrite one anyway
+		_make_variant(pool[randi() % pool.size()], "mace")
 	# from wave 2 on, never roll an all-normal wave
 	if wave >= 2:
 		var has_variant := false
@@ -144,17 +153,31 @@ func spawn_snake() -> SnakeEnemy:
 		(Vector2(WORLD_W / 2, WORLD_H / 2) - pos).angle()
 	)
 	# variants show up from wave 2, ramping up fast
-	if wave >= 2 and randf() < minf(0.15 + wave * 0.05, 0.45):
+	if wave >= 3 and randf() < minf(0.10 + wave * 0.04, 0.30) and not _has_mace_snake():
+		_make_variant(s, "mace")
+	elif wave >= 2 and randf() < minf(0.15 + wave * 0.05, 0.45):
 		_make_variant(s, "splitter")
 	elif wave >= 2 and randf() < minf(0.20 + wave * 0.05, 0.50):
 		_make_variant(s, "armored")
 	return s
 
 
+# one flail-swinger at a time is plenty
+func _has_mace_snake() -> bool:
+	for s in alive_snakes():
+		if s.kind == "mace":
+			return true
+	return false
+
+
 func _make_variant(s: SnakeEnemy, k: String) -> void:
 	s.kind = k
 	if k == "armored":
 		s.base_speed *= 0.85
+	elif k == "mace":
+		s.base_speed *= 0.9
+		s.grow(2)  # a bit of extra tail to swing from
+		s.init_mace()
 
 
 func adopt_snake(s: SnakeEnemy) -> void:
@@ -489,6 +512,29 @@ func _update_game(dt: float) -> void:
 					player.dash_time = 0
 				break
 		
+
+	# mace balls: dashing into one gets blocked like armor, a fast swing
+	# deals a hit with knockback, a slow ball just shoves you around
+	for s in alive_snakes():
+		if s.kind != "mace":
+			continue
+		var mp: Vector2 = s.mace_pos
+		if mp.distance_to(player.position) >= s.MACE_RADIUS + player.radius:
+			continue
+		var away: Vector2 = (player.position - mp).normalized()
+		if player.is_dashing:
+			$World/Effects.popup(player.position + Vector2(0, -30), TEX_BLOCK)
+			player.vel = away * 500.0
+			player.dash_time = 0
+			player.invuln = maxf(player.invuln, 0.4)
+			shake(50)
+		elif s.mace_speed() > 260.0 and s._mace_hit_cd <= 0:
+			s._mace_hit_cd = 0.6
+			player.hit()
+			player.vel = away * 560.0 + s.mace_vel * 0.4
+			shake(70)
+		else:
+			player.resolve_circle(mp, s.MACE_RADIUS)
 
 	# push out of bodies (neck counts as head)
 	for s in alive_snakes():
