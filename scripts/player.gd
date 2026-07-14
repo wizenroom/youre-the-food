@@ -44,11 +44,16 @@ var _applecrunch := preload("res://audio/apple_crunch.mp3")
 var _hard_hit := preload("res://audio/hard_hit.mp3")
 var _hit := preload("res://audio/hit.wav")
 var _small_crunch := preload("res://audio/small_crunch.wav")
+var _dash := preload("res://audio/Dash.wav")
+
 
 var damagedstream := AudioStreamPlayer.new()
 var crunchstream := AudioStreamPlayer.new()
 var hitstream := AudioStreamPlayer.new()
 var smallcrunch := AudioStreamPlayer.new()
+var dashstream := AudioStreamPlayer.new()
+
+
 
 # the painted lightning points up-right at roughly this angle
 const STREAK_ART_ANGLE := 0.45
@@ -68,6 +73,11 @@ func setup(g: Node, pos: Vector2) -> void:
 	
 	smallcrunch.stream = _small_crunch
 	add_child(smallcrunch)
+	
+	dashstream.stream = _dash
+	add_child(dashstream)
+	
+	
 
 
 func update(dt: float) -> void:
@@ -176,6 +186,8 @@ func dash() -> void:
 	game.spawn_burst(position, Color("ff4757"), 8)
 	
 	updateLastDashCount()
+	
+	dashstream.play()
 	
 	
 

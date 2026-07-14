@@ -40,6 +40,8 @@ var shake_strength := 0.0
 var shake_decay := 100.0
 var offset := Vector2.ZERO
 
+var _point := preload("res://audio/Point.wav")
+var pointstream := AudioStreamPlayer.new() 
 
 @onready var camera: Camera2D = $Camera
 @onready var hud: Control = $UI/HUD
@@ -58,6 +60,11 @@ func _ready() -> void:
 	$UI/DeathScreen/BackButton.pressed.connect(to_menu)
 	_load_high_score()
 	set_state(State.MENU)
+	
+	pointstream.stream = _point
+	add_child(pointstream)
+	
+	pointstream.volume_db = 6
 
 
 func set_state(s: State) -> void:
@@ -288,6 +295,9 @@ func alive_powerups() -> Array:
 
 func add_score(n: int) -> void:
 	score += n
+	print("Addedpoints")
+	pointstream.play()
+	
 
 
 func spawn_burst(pos: Vector2, color: Color, count: int) -> void:
