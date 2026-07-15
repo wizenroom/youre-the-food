@@ -19,8 +19,11 @@ const CRITTER := preload("res://scripts/critter.gd")
 const SPIKE := preload("res://scripts/spike.gd")
 const ANT_MARCH := preload("res://scripts/ant_march.gd")
 const FAKE_PLAYER := preload("res://scripts/fake_player.gd")
+const MINI_APPLE := preload("res://scripts/mini_apple.gd")
 const MAX_CRITTERS := 12
 const FAKE_COUNT := 4
+const MINI_COST := 250
+const MINI_MAX := 8
 
 var state: State = State.MENU
 var score := 0
@@ -105,8 +108,10 @@ func to_menu() -> void:
 
 func _clear_world() -> void:
 	_ensure_fake_root()
+	_ensure_mini_root()
 	for group in [$World/Snakes, $World/Pellets, $World/Powerups, $World/Splats,
-			$World/Hazards, $World/Critters, $World/PlayerRoot, $World/FakePlayers]:
+			$World/Hazards, $World/Critters, $World/PlayerRoot, $World/FakePlayers,
+			$World/Minis]:
 		for c in group.get_children():
 			if "dead" in c:
 				c.dead = true
@@ -305,6 +310,44 @@ func alive_fake_players() -> Array:
 		if not fp.dead:
 			out.append(fp)
 	return out
+
+
+func _ensure_mini_root() -> Node2D:
+	if not has_node("World/Minis"):
+		var n := Node2D.new()
+		n.name = "Minis"
+		$World.add_child(n)
+	return $World/Minis
+
+
+func alive_minis() -> Array:
+	_ensure_mini_root()
+	var out := []
+	for m in $World/Minis.get_children():
+		if not m.dead:
+			out.append(m)
+	return out
+
+
+func summon_mini() -> void:
+	if player == null or player.dying:
+		return
+	if score < MINI_COST or alive_minis().size() >= MINI_MAX:
+		$World/Effects.popup(player.position + Vector2(0, -40), TEX_BLOCK, 36.0)
+		return
+	score -= MINI_COST
+	var m: MiniApple = MINI_APPLE.new()
+	_ensure_mini_root().add_child(m)
+	var behind: Vector2 = player.position + Vector2.from_angle(randf() * TAU) * 50.0
+	m.setup(self, behind)
+	spawn_hit_spark(behind, 32.0)
+
+
+func rally_minis() -> void:
+	if player == null or player.dying:
+		return
+	for m in alive_minis():
+		m.rally()
 
 
 func food_targets() -> Array:
@@ -510,9 +553,16 @@ func _update_game(dt: float) -> void:
 	wave_banner = maxf(0, wave_banner - dt)
 	aim = get_global_mouse_position()
 
+	if Input.is_action_just_pressed("summon"):
+		summon_mini()
+	if Input.is_action_just_pressed("rally"):
+		rally_minis()
+
 	player.update(dt)
 	for fp in alive_fake_players():
 		fp.update(dt)
+	for m in alive_minis():
+		m.update(dt)
 	for s in alive_snakes():
 		s.update(dt)
 	for c in alive_critters():
@@ -542,7 +592,7 @@ func _update_game(dt: float) -> void:
 
 	# dash attacks. hits near the head count as head hits, otherwise the
 	# neck shields it forever and cutting there wipes the whole body
-	if player.is_dashing:
+	if player.is_dashing and not player.dying:
 		for s in alive_snakes():
 			
 			var head_hit: bool = s.hit_head(player.position, player.radius + 6)
@@ -661,7 +711,9 @@ func _update_game(dt: float) -> void:
 				continue
 			var away: Vector2 = (prey.position - mp).normalized()
 			if prey == player:
-				if player.is_dashing:
+				if player.dying:
+					pass
+				elif player.is_dashing:
 					$World/Effects.popup(player.position + Vector2(0, -30), TEX_BLOCK)
 					player.vel = away * 500.0
 					player.dash_time = 0
@@ -711,6 +763,49 @@ func _update_game(dt: float) -> void:
 					s.retreat = 1.2
 				break
 
+	# little guys: rallied minis cut unarmored body segments only. armor and
+	# heads shrug them off, so they can't cheese what the player can't
+	for m in alive_minis():
+		var m_done := false
+		for s in alive_snakes():
+			if m.rallying:
+				var head_hit: bool = s.hit_head(m.position, m.radius + 4)
+				var body_hit: int = s.hit_body(m.position, m.radius + 4)
+				if body_hit >= 0 and not s.is_armored_at(body_hit):
+					s.cut_at(body_hit)
+					spawn_hit_spark(m.position, 40.0)
+					shake(30)
+					# fighters shake it off and go again
+					if m.kind == "fighter":
+						m.rallying = false
+						m.invuln = maxf(m.invuln, 0.6)
+						m.vel *= -0.5
+					else:
+						m.die()
+					m_done = true
+				elif head_hit or body_hit >= 0:
+					$World/Effects.popup(m.position + Vector2(0, -20), TEX_BLOCK, 32.0)
+					m.rallying = false
+					m.vel *= -0.7
+					if not m.take_chomp():
+						m_done = true
+			elif s.hit_head(m.position, m.radius):
+				# gulp. that's what you get for standing around
+				spawn_burst(m.position, Color("ff4757"), 6)
+				if not m.take_chomp():
+					m_done = true
+			if m_done:
+				break
+		if m_done:
+			continue
+		# little feet, big stomps: minis squish critters on contact
+		for c in alive_critters():
+			if c.position.distance_to(m.position) < c.radius + m.radius:
+				add_score(15)
+				spawn_hit_spark(c.position, 30.0)
+				spawn_critter_squish(c.position)
+				c.die()
+
 	# team kill: head into another snake's body = dead
 	for a in alive_snakes():
 		if a.dead or a.grace > 0:
@@ -732,8 +827,6 @@ func _update_game(dt: float) -> void:
 	for c in alive_critters():
 		if c.position.distance_to(player.position) < c.radius + player.radius:
 			if player.dash_time > 0:
-				freezeframe(0.05)
-				
 				add_score(15)
 				spawn_hit_spark(c.position, 36.0)
 				spawn_critter_squish(c.position)

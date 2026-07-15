@@ -18,6 +18,7 @@ var _wave_value: PaintedNumber
 var _time_value: PaintedNumber
 var _dash_label: Label
 var _power_label: Label
+var _mini_label: Label
 var _banner: Label
 var _hearts: Array[TextureRect] = []
 
@@ -46,6 +47,7 @@ func _ready() -> void:
 
 	_dash_label = _add_label("DASH READY", Vector2(16, 607), 20, INK, false)
 	_power_label = _add_label("", Vector2(16, 581), 20, AMBER, false)
+	_mini_label = _add_label("", Vector2(640, 607), 20, INK, false)
 
 	_banner = Label.new()
 	_banner.text = "WAVE 1"
@@ -111,6 +113,12 @@ func update_hud() -> void:
 		_power_label.text = game.player.power.to_upper() + t
 	else:
 		_power_label.text = ""
+
+	var minis: int = game.alive_minis().size()
+	if minis > 0:
+		_mini_label.text = "[Q] MINI %dpts   [E] RALLY x%d" % [game.MINI_COST, minis]
+	else:
+		_mini_label.text = "[Q] SUMMON MINI %dpts" % game.MINI_COST
 
 	_banner.visible = game.wave_banner > 0
 	_banner.text = "WAVE %d" % game.wave

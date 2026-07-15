@@ -61,6 +61,16 @@ var dashstream := AudioStreamPlayer.new()
 
 var _tex_you: Texture2D = preload("res://assets/player_you.png")
 var _tex_arrow: Texture2D = preload("res://assets/player_arrow.png")
+var _tex_grave: Texture2D = preload("res://assets/player_grave.png")
+
+# death: shake the apple, then morph into a gravestone before game over
+var dying := false
+var death_t := 0.0
+var _death_done := false
+var _shake_off := Vector2.ZERO
+const DEATH_SHAKE := 0.7
+const DEATH_MORPH := 1.45
+const DEATH_HOLD := 2.15
 
 # the painted lightning points up-right at roughly this angle
 const STREAK_ART_ANGLE := 0.45
@@ -88,6 +98,11 @@ func setup(g: Node, pos: Vector2) -> void:
 
 
 func update(dt: float) -> void:
+	if dying:
+		_update_death(dt)
+		queue_redraw()
+		return
+
 	var axis := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	vel += axis * accel * dt
 
@@ -207,7 +222,7 @@ func hittedSomethingWhileDashing() -> void:
 	#main.freezeframe(0.05)
 	
 func hit() -> void:
-	if invuln > 0:
+	if invuln > 0 or dying:
 		return
 	
 	if power == "shield":
@@ -226,7 +241,45 @@ func hit() -> void:
 	
 	game.spawn_hurt(position)
 	if lives <= 0:
+		_begin_death()
+
+
+func _begin_death() -> void:
+	dying = true
+	death_t = 0.0
+	_death_done = false
+	_shake_off = Vector2.ZERO
+	vel = Vector2.ZERO
+	dash_time = 0.0
+	is_dashing = false
+	invuln = 999.0
+	power = ""
+	hurt_flash = 0.0
+	game.spawn_burst(position, Color("ff4757"), 18)
+	game.shake(90)
+
+
+func _update_death(dt: float) -> void:
+	death_t += dt
+	if death_t < DEATH_SHAKE:
+		var intensity := 1.0 - death_t / DEATH_SHAKE
+		_shake_off = Vector2(
+			randf_range(-1.0, 1.0),
+			randf_range(-1.0, 1.0)
+		) * (14.0 * intensity)
+		if int(death_t * 18.0) != int((death_t - dt) * 18.0):
+			game.shake(20.0 * intensity)
+	else:
+		_shake_off = Vector2.ZERO
+
+	if death_t >= DEATH_HOLD and not _death_done:
+		_death_done = true
 		game.game_over()
+
+
+func _smoothstep(t: float) -> float:
+	t = clampf(t, 0.0, 1.0)
+	return t * t * (3.0 - 2.0 * t)
 
 
 # push out of a solid circle without damage
@@ -260,7 +313,11 @@ func drawSprite() -> void:
 			Util.draw_sprite(self, _tex, Vector2.ZERO, 38)
 	
 
-func _draw() -> void:	
+func _draw() -> void:
+	if dying:
+		_draw_death()
+		return
+
 	# flicker only when actually damaged, not during dash-granted invuln
 	if hurt_flash > 0 and int(floor(hurt_flash * 12)) % 2 == 0:
 		return
@@ -316,11 +373,35 @@ func _draw() -> void:
 	Util.draw_sprite(self, _tex_you, Vector2(0, -78 + mark_bob), 48)
 	# arrow art points down; anchor so the tip lands on the apple
 	Util.draw_sprite(self, _tex_arrow, Vector2(0, -52 + mark_bob * 0.4), 40)
-		#if is_dashing == true:
-			#var angle = (-vel).angle()
-			#var randrotatedvector = Vector2.from_angle(angle + (randf_range(-1,1) * (PI/4)))
-			#var lenght = vel.length()
-			#var randlength = vel * randf()
-			
-			#draw_line(Vector2.ZERO,randrotatedvector*randlength,Color(0,0.8,0.8),10)
-		
+
+
+func _draw_death() -> void:
+	var apple_a := 1.0
+	var grave_a := 0.0
+	var apple_sz := 42.0
+	var grave_sz := 0.0
+	var grave_y := 10.0
+
+	if death_t < DEATH_SHAKE:
+		apple_a = 1.0
+		apple_sz = 42.0 + sin(death_t * 55.0) * 3.0
+	else:
+		var u := _smoothstep((death_t - DEATH_SHAKE) / (DEATH_MORPH - DEATH_SHAKE))
+		apple_a = 1.0 - u
+		grave_a = u
+		apple_sz = lerpf(42.0, 18.0, u)
+		grave_sz = lerpf(28.0, 96.0, u)
+		grave_y = lerpf(0.0, 12.0, u)
+
+	Util.draw_shadow(self, _shake_off + Vector2(0, 6), lerpf(50.0, 70.0, grave_a))
+
+	if apple_a > 0.02:
+		draw_set_transform(_shake_off, roll * (1.0 - grave_a), Vector2.ONE)
+		Util.draw_sprite(self, _tex, Vector2.ZERO, apple_sz,
+				Color(1, 1, 1, apple_a))
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+
+	if grave_a > 0.02:
+		# bottom-aligned grave art: nudge down so the mound sits on the ground
+		Util.draw_sprite(self, _tex_grave, Vector2(0, grave_y), grave_sz,
+				Color(1, 1, 1, grave_a))
