@@ -53,6 +53,7 @@ var hit_velocity := Vector2.ZERO
 @export var hit_spring := 100.0
 @export var hit_damping := 8.0
 
+@onready var main = get_tree().current_scene
 
 @onready var trail_painter := get_tree().current_scene.get_node("World/Background2/TrailPainter")
 
@@ -282,6 +283,12 @@ func hit_body(p: Vector2, r: float) -> int:
 			best = i
 	return best
 	
+func willdie() -> bool:
+	if segments.is_empty():
+		return true
+		
+	return false
+
 
 func hit_head(p: Vector2, r: float) -> bool:
 	return p.distance_to(head) < r + head_radius
