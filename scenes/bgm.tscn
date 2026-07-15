@@ -3,53 +3,10 @@
 [ext_resource type="Script" uid="uid://dyfd76b42t1hd" path="res://scenes/bgm.gd" id="1_u4ddl"]
 [ext_resource type="AudioStream" uid="uid://bsvkijtggcdu6" path="res://audio/BGM/Axiom.mp3" id="2_48mr8"]
 [ext_resource type="AudioStream" uid="uid://bobfpkb0p6loq" path="res://audio/BGM/Out of the Blue.mp3" id="3_dg162"]
-
-[sub_resource type="FontFile" id="FontFile_0ebda"]
-subpixel_positioning = 0
-msdf_pixel_range = 14
-msdf_size = 128
-cache/0/variation_coordinates = {}
-cache/0/face_index = 0
-cache/0/embolden = 0.0
-cache/0/transform = Transform2D(1, 0, 0, 1, 0, 0)
-cache/0/spacing_top = 0
-cache/0/spacing_bottom = 0
-cache/0/spacing_space = 0
-cache/0/spacing_glyph = 0
-cache/0/baseline_offset = 0.0
-cache/0/16/0/ascent = 0.0
-cache/0/16/0/descent = 0.0
-cache/0/16/0/underline_position = 0.0
-cache/0/16/0/underline_thickness = 0.0
-cache/0/16/0/scale = 1.0
-cache/0/32/0/ascent = 0.0
-cache/0/32/0/descent = 0.0
-cache/0/32/0/underline_position = 0.0
-cache/0/32/0/underline_thickness = 0.0
-cache/0/32/0/scale = 1.0
-cache/0/52/0/ascent = 0.0
-cache/0/52/0/descent = 0.0
-cache/0/52/0/underline_position = 0.0
-cache/0/52/0/underline_thickness = 0.0
-cache/0/52/0/scale = 1.0
-cache/0/15/0/ascent = 0.0
-cache/0/15/0/descent = 0.0
-cache/0/15/0/underline_position = 0.0
-cache/0/15/0/underline_thickness = 0.0
-cache/0/15/0/scale = 1.0
-cache/0/12/0/ascent = 0.0
-cache/0/12/0/descent = 0.0
-cache/0/12/0/underline_position = 0.0
-cache/0/12/0/underline_thickness = 0.0
-cache/0/12/0/scale = 1.0
-cache/0/26/0/ascent = 0.0
-cache/0/26/0/descent = 0.0
-cache/0/26/0/underline_position = 0.0
-cache/0/26/0/underline_thickness = 0.0
-cache/0/26/0/scale = 1.0
+[ext_resource type="AudioStream" uid="uid://cek4oxawbogtt" path="res://audio/BGM/Atoms.mp3" id="4_atoms"]
+[ext_resource type="AudioStream" uid="uid://c4v766b5ag71m" path="res://audio/BGM/Why Is No One Watching.mp3" id="5_why"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_1edjn"]
-font = SubResource("FontFile_0ebda")
 font_size = 26
 
 [node name="BGM" type="CanvasLayer" unique_id=1703786727]
@@ -61,6 +18,12 @@ stream = ExtResource("2_48mr8")
 [node name="Out of the Blue" type="AudioStreamPlayer" parent="." unique_id=655265026]
 stream = ExtResource("3_dg162")
 
+[node name="Atoms" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("4_atoms")
+
+[node name="WhyIsNoOneWatching" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("5_why")
+
 [node name="Control" type="Control" parent="." unique_id=1295603443]
 layout_mode = 3
 anchors_preset = 15
@@ -71,36 +34,80 @@ grow_vertical = 2
 mouse_filter = 2
 
 [node name="Axiom" type="Label" parent="Control" unique_id=1728693441]
-modulate = Color(1, 1, 1, 0.8901961)
+modulate = Color(1, 1, 1, 0.89)
 layout_mode = 1
 anchors_preset = 3
 anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -394.0
-offset_top = -71.0
+offset_left = -480.0
+offset_top = -56.0
+offset_right = -16.0
+offset_bottom = -12.0
 grow_horizontal = 0
 grow_vertical = 0
 text = "1982 - ItsMrEric"
 label_settings = SubResource("LabelSettings_1edjn")
-horizontal_alignment = 1
+horizontal_alignment = 2
 vertical_alignment = 1
 
 [node name="OutOfTheBlue" type="Label" parent="Control" unique_id=1717559480]
 visible = false
-modulate = Color(1, 1, 1, 0.26666668)
+modulate = Color(1, 1, 1, 0.89)
 layout_mode = 1
 anchors_preset = 3
 anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -394.0
-offset_top = -71.0
+offset_left = -480.0
+offset_top = -56.0
+offset_right = -16.0
+offset_bottom = -12.0
 grow_horizontal = 0
 grow_vertical = 0
 text = "Out Of The Blue - ItsMrEric"
 label_settings = SubResource("LabelSettings_1edjn")
-horizontal_alignment = 1
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="Atoms" type="Label" parent="Control"]
+visible = false
+modulate = Color(1, 1, 1, 0.89)
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -480.0
+offset_top = -56.0
+offset_right = -16.0
+offset_bottom = -12.0
+grow_horizontal = 0
+grow_vertical = 0
+text = "Atoms - ItsMrEric"
+label_settings = SubResource("LabelSettings_1edjn")
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="WhyIsNoOneWatching" type="Label" parent="Control"]
+visible = false
+modulate = Color(1, 1, 1, 0.89)
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -620.0
+offset_top = -56.0
+offset_right = -16.0
+offset_bottom = -12.0
+grow_horizontal = 0
+grow_vertical = 0
+text = "Why Is No One Watching - ItsMrEric"
+label_settings = SubResource("LabelSettings_1edjn")
+horizontal_alignment = 2
 vertical_alignment = 1

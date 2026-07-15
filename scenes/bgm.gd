@@ -1,43 +1,40 @@
 extends CanvasLayer
 
-@onready var Axiom: AudioStreamPlayer = $Axiom
-@onready var OutOfTheBlue: AudioStreamPlayer = $"Out of the Blue"
+## Track order: 0 Axiom, 1 Out of the Blue, 2 Atoms, 3 Why Is No One Watching
+## Why is never the first song that plays.
 
-@onready var AxiomLabel:= $Control/Axiom
-@onready var OutOfTheBlueLabel := $"Control/OutOfTheBlue"
+@onready var _players: Array[AudioStreamPlayer] = [
+	$Axiom,
+	$"Out of the Blue",
+	$Atoms,
+	$WhyIsNoOneWatching,
+]
+@onready var _labels: Array[Label] = [
+	$Control/Axiom,
+	$Control/OutOfTheBlue,
+	$Control/Atoms,
+	$Control/WhyIsNoOneWatching,
+]
 
-var current_track := randi_range(1,2)
+const WHY_INDEX := 3
+var current_track := -1
 
 
-func _ready():
-	Axiom.finished.connect(_on_audio_finished)
-	OutOfTheBlue.finished.connect(_on_audio_finished)
-	_on_audio_finished()
+func _ready() -> void:
+	for p in _players:
+		p.finished.connect(_on_audio_finished)
+	# first song: anything except Why
+	_play_track(randi() % WHY_INDEX)
 
 
-func play_Axiom():
-	current_track = 1
-	Axiom.play()
-	showAxiomlabel()
+func _play_track(index: int) -> void:
+	if current_track >= 0 and current_track < _players.size():
+		_players[current_track].stop()
+	current_track = index
+	_players[current_track].play()
+	for i in _labels.size():
+		_labels[i].visible = i == current_track
 
 
-func play_OutOfTheBlue():
-	current_track = 2
-	OutOfTheBlue.play()
-	showOutOfTheBlueLabel()
-
-func showAxiomlabel():
-	AxiomLabel.visible = true
-	OutOfTheBlueLabel.visible = false
-	
-func showOutOfTheBlueLabel():
-	AxiomLabel.visible = false
-	OutOfTheBlueLabel.visible = true
-	
-
-func _on_audio_finished():
-	if current_track == 1:
-		play_OutOfTheBlue()
-	else:
-		play_Axiom()
-		
+func _on_audio_finished() -> void:
+	_play_track((current_track + 1) % _players.size())
