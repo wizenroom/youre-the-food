@@ -77,5 +77,8 @@ func _draw() -> void:
 		var pop: float = minf(1.0, age * 10.0)
 		var alpha: float = minf(1.0, p.life / p.max_life * 2.5)
 		var sz: float = p.size * pop
-		draw_texture_rect(p.tex, Rect2(p.pos - Vector2(sz, sz) / 2.0, Vector2(sz, sz)),
+		# wide art (like painted text) keeps its aspect instead of squashing
+		var ar: float = p.tex.get_height() / float(p.tex.get_width())
+		var dims := Vector2(sz, sz * ar) if ar < 1.0 else Vector2(sz / ar, sz)
+		draw_texture_rect(p.tex, Rect2(p.pos - dims / 2.0, dims),
 				false, Color(1, 1, 1, alpha))

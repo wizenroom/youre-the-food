@@ -267,10 +267,15 @@ func grow(n: int) -> void:
 		segments.append(tail)
 
 
+func _neck_range() -> float:
+	return head_radius + seg_radius - 6.0
+
+
 # body only. returns the nearest overlapping segment, not the first by index,
-# so a coiled snake can't turn a tail hit into a front-segment hit
+# so a coiled snake can't turn a tail hit into a front-segment hit.
+# neck segments are skipped here — use hit_neck / touches_prey for those.
 func hit_body(p: Vector2, r: float) -> int:
-	var neck_max := head_radius + seg_radius - 6
+	var neck_max := _neck_range()
 	var best := -1
 	var best_d := INF
 	for i in segments.size():
@@ -282,7 +287,26 @@ func hit_body(p: Vector2, r: float) -> int:
 			best_d = d
 			best = i
 	return best
-	
+
+
+# front segments parked under the head — used to count as a head strike
+func hit_neck(p: Vector2, r: float) -> bool:
+	var neck_max := _neck_range()
+	for s in segments:
+		if s.distance_to(head) >= neck_max:
+			continue
+		if p.distance_to(s) < r + seg_radius:
+			return true
+	return false
+
+
+# any overlap that should hurt an apple (head, neck, or body)
+func touches_prey(p: Vector2, r: float) -> bool:
+	if hit_head(p, r) or hit_neck(p, r):
+		return true
+	return hit_body(p, r) >= 0
+
+
 func willdie() -> bool:
 	if segments.is_empty():
 		return true

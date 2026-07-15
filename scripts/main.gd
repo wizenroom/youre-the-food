@@ -13,6 +13,8 @@ const TEX_BLOCK := preload("res://assets/fx_block.png")
 const TEX_SPARK := preload("res://assets/fx_hit_spark.png")
 const TEX_HURT := preload("res://assets/fx_hurt.png")
 const TEX_CRITTER_SQUISH := preload("res://assets/critter_squish.png")
+const TEX_SUMMON := preload("res://assets/fx_summon.png")
+const TEX_TOO_BROKE := preload("res://assets/fx_too_broke.png")
 const SAVE_PATH := "user://highscore.cfg"
 const BOULDER := preload("res://scripts/boulder.gd")
 const CRITTER := preload("res://scripts/critter.gd")
@@ -48,6 +50,11 @@ var offset := Vector2.ZERO
 var _point := preload("res://audio/Point.wav")
 var pointstream := AudioStreamPlayer.new() 
 
+# shared mini-apple sfx live here so a popped mini can't cut its own sound off
+var mini_dash_stream := AudioStreamPlayer.new()
+var mini_hit_stream := AudioStreamPlayer.new()
+var mini_crunch_stream := AudioStreamPlayer.new()
+
 @onready var camera: Camera2D = $Camera
 @onready var hud: Control = $UI/HUD
 
@@ -70,6 +77,17 @@ func _ready() -> void:
 	add_child(pointstream)
 	
 	pointstream.volume_db = 6
+
+	# tiny apples squeak: same sounds as the player, pitched up
+	mini_dash_stream.stream = preload("res://audio/Dash.wav")
+	mini_dash_stream.pitch_scale = 1.35
+	add_child(mini_dash_stream)
+	mini_hit_stream.stream = preload("res://audio/hit.wav")
+	mini_hit_stream.pitch_scale = 1.3
+	add_child(mini_hit_stream)
+	mini_crunch_stream.stream = preload("res://audio/small_crunch.wav")
+	mini_crunch_stream.pitch_scale = 1.25
+	add_child(mini_crunch_stream)
 
 
 func set_state(s: State) -> void:
@@ -332,7 +350,14 @@ func alive_minis() -> Array:
 func summon_mini() -> void:
 	if player == null or player.dying:
 		return
-	if score < MINI_COST or alive_minis().size() >= MINI_MAX:
+	if has_node("World/Minis"):
+		for m in $World/Minis.get_children():
+			if m.dead:
+				m.queue_free()
+	if score < MINI_COST:
+		$World/Effects.popup(player.position + Vector2(0, -72), TEX_TOO_BROKE, 180.0)
+		return
+	if alive_minis().size() >= MINI_MAX:
 		$World/Effects.popup(player.position + Vector2(0, -40), TEX_BLOCK, 36.0)
 		return
 	score -= MINI_COST
@@ -340,14 +365,23 @@ func summon_mini() -> void:
 	_ensure_mini_root().add_child(m)
 	var behind: Vector2 = player.position + Vector2.from_angle(randf() * TAU) * 50.0
 	m.setup(self, behind)
-	spawn_hit_spark(behind, 32.0)
+	spawn_burst(behind, m.tint, 10)
+	spawn_hit_spark(behind, 36.0)
+	$World/Effects.popup(player.position + Vector2(0, -72), TEX_SUMMON, 180.0)
+	mini_dash_stream.play()
+	shake(25)
 
 
 func rally_minis() -> void:
 	if player == null or player.dying:
 		return
+	var any := false
 	for m in alive_minis():
-		m.rally()
+		if m.can_rally():
+			m.rally()
+			any = true
+	if any:
+		shake(20)
 
 
 func food_targets() -> Array:
@@ -590,12 +624,11 @@ func _update_game(dt: float) -> void:
 
 	var dash_hit := false
 
-	# dash attacks. hits near the head count as head hits, otherwise the
-	# neck shields it forever and cutting there wipes the whole body
+	# dash attacks. neck + first body links count as head; farther body cuts
 	if player.is_dashing and not player.dying:
 		for s in alive_snakes():
-			
-			var head_hit: bool = s.hit_head(player.position, player.radius + 6)
+			var head_hit: bool = s.hit_head(player.position, player.radius + 6) \
+					or s.hit_neck(player.position, player.radius + 4)
 			var body_hit: int = s.hit_body(player.position, player.radius)
 
 			# armor blocks the dash, even pierce
@@ -609,7 +642,8 @@ func _update_game(dt: float) -> void:
 				s.hit(player.vel)
 				player.vel *= -0.55
 				player.dash_time = 0
-				player.invuln = maxf(player.invuln, 0.4)
+				player.is_dashing = false
+				player.invuln = maxf(player.invuln, 0.25)
 				shake(50)
 				player.hittedSomethingWhileDashing()
 				dash_hit = true  # no bite on the same touch
@@ -629,7 +663,7 @@ func _update_game(dt: float) -> void:
 				var d := player.position - boom
 				var dist := maxf(d.length(), 1.0)
 				player.position += d / dist * 40.0
-				player.invuln = maxf(player.invuln, 0.5)
+				player.invuln = maxf(player.invuln, 0.25)
 				shake(50)
 				dash_hit = true
 				player.hittedSomethingWhileDashing()
@@ -637,6 +671,7 @@ func _update_game(dt: float) -> void:
 				if player.power != "pierce":
 					player.vel *= -0.35
 					player.dash_time = 0
+					player.is_dashing = false
 				break
 
 			if body_hit >= 0:
@@ -649,13 +684,14 @@ func _update_game(dt: float) -> void:
 				s.cut_at(body_hit)
 				spawn_hit_spark(player.position)
 				spawn_burst(player.position, Color("2ed573"), 12)
-				player.invuln = maxf(player.invuln, 0.3)
+				player.invuln = maxf(player.invuln, 0.2)
 				shake(50)
 				dash_hit = true
 				player.hittedSomethingWhileDashing()
 				if player.power != "pierce":
 					player.vel *= -0.4
 					player.dash_time = 0
+					player.is_dashing = false
 				break
 
 	# bot dash attacks use the same head/body rules as the player
@@ -664,14 +700,15 @@ func _update_game(dt: float) -> void:
 		if fp.dash_time <= 0:
 			continue
 		for s in alive_snakes():
-			var head_hit: bool = s.hit_head(fp.position, fp.radius + 6)
+			var head_hit: bool = s.hit_head(fp.position, fp.radius + 6) \
+					or s.hit_neck(fp.position, fp.radius + 4)
 			var body_hit: int = s.hit_body(fp.position, fp.radius)
 
 			if body_hit >= 0 and s.is_armored_at(body_hit) and not head_hit:
 				$World/Effects.popup(fp.position + Vector2(0, -30), TEX_BLOCK)
 				fp.vel *= -0.55
 				fp.dash_time = 0
-				fp.invuln = maxf(fp.invuln, 0.4)
+				fp.invuln = maxf(fp.invuln, 0.25)
 				shake(30)
 				bot_dash_hits[fp] = true
 				break
@@ -682,7 +719,7 @@ func _update_game(dt: float) -> void:
 				var d := fp.position - boom
 				var dist := maxf(d.length(), 1.0)
 				fp.position += d / dist * 40.0
-				fp.invuln = maxf(fp.invuln, 0.5)
+				fp.invuln = maxf(fp.invuln, 0.25)
 				shake(30)
 				fp.vel *= -0.35
 				fp.dash_time = 0
@@ -693,7 +730,7 @@ func _update_game(dt: float) -> void:
 				s.cut_at(body_hit)
 				spawn_hit_spark(fp.position)
 				spawn_burst(fp.position, fp.tint, 12)
-				fp.invuln = maxf(fp.invuln, 0.3)
+				fp.invuln = maxf(fp.invuln, 0.2)
 				shake(30)
 				fp.vel *= -0.4
 				fp.dash_time = 0
@@ -717,7 +754,8 @@ func _update_game(dt: float) -> void:
 					$World/Effects.popup(player.position + Vector2(0, -30), TEX_BLOCK)
 					player.vel = away * 500.0
 					player.dash_time = 0
-					player.invuln = maxf(player.invuln, 0.4)
+					player.is_dashing = false
+					player.invuln = maxf(player.invuln, 0.25)
 					shake(50)
 				elif s.mace_speed() > 260.0 and s._mace_hit_cd <= 0:
 					s._mace_hit_cd = 0.6
@@ -735,76 +773,98 @@ func _update_game(dt: float) -> void:
 				elif s.mace_speed() > 220.0 and prey.invuln <= 0:
 					prey.hit()
 
-	# push everyone out of snake bodies (neck counts as head)
-	for prey in food_targets():
-		for s in alive_snakes():
-			var neck_max: float = s.head_radius + s.seg_radius - 6
-			for seg: Vector2 in s.segments:
-				if seg.distance_to(s.head) < neck_max:
-					continue
-				prey.resolve_circle(seg, s.seg_radius)
-			prey.resolve_circle(s.head, s.head_radius)
-
-	# head and body both hurt any apple, unless the dash just connected
+	# hurt before soft-resolve. use touches_prey so neck contact bites too —
+	# skipping neck made apples randomly invincible depending on where they touched
 	if not dash_hit:
 		for prey in food_targets():
+			if prey is FakePlayer and bot_dash_hits.get(prey, false):
+				continue
+			if prey is FakePlayer and prey.dash_time > 0:
+				continue
 			for s in alive_snakes():
-				var body_hit: int = s.hit_body(prey.position, prey.radius)
-				var head_hit: bool = s.hit_head(prey.position, prey.radius)
-				if body_hit < 0 and not head_hit:
+				if not s.touches_prey(prey.position, prey.radius):
 					continue
 				if prey == player:
 					player.hit()
 					shake(100)
 				elif prey is FakePlayer:
-					if not bot_dash_hits.get(prey, false):
-						prey.hit()
-				if head_hit:
+					prey.hit()
+				if s.hit_head(prey.position, prey.radius) or s.hit_neck(prey.position, prey.radius):
 					s.retreat = 1.2
 				break
 
-	# little guys: rallied minis cut unarmored body segments only. armor and
-	# heads shrug them off, so they can't cheese what the player can't
+	# push out of the whole snake, neck included — no safe pockets
+	for prey in food_targets():
+		for s in alive_snakes():
+			for seg: Vector2 in s.segments:
+				prey.resolve_circle(seg, s.seg_radius)
+			prey.resolve_circle(s.head, s.head_radius)
+
+	# little guys: rally is a kamikaze — connect and they pop.
+	# armor still blocks; tanks can eat one bounce, everyone else dies.
 	for m in alive_minis():
 		var m_done := false
-		for s in alive_snakes():
-			if m.rallying:
-				var head_hit: bool = s.hit_head(m.position, m.radius + 4)
-				var body_hit: int = s.hit_body(m.position, m.radius + 4)
-				if body_hit >= 0 and not s.is_armored_at(body_hit):
-					s.cut_at(body_hit)
-					spawn_hit_spark(m.position, 40.0)
-					shake(30)
-					# fighters shake it off and go again
-					if m.kind == "fighter":
-						m.rallying = false
-						m.invuln = maxf(m.invuln, 0.6)
-						m.vel *= -0.5
+		if m.rallying or m.dash_time > 0:
+			for s in alive_snakes():
+				var head_hit: bool = s.hit_head(m.position, m.radius + 10) \
+						or s.hit_neck(m.position, m.radius + 8)
+				var body_hit: int = s.hit_body(m.position, m.radius + 6)
+
+				if body_hit >= 0 and s.is_armored_at(body_hit) and not head_hit:
+					$World/Effects.popup(m.position + Vector2(0, -20), TEX_BLOCK, 32.0)
+					m.vel *= -0.55
+					m.dash_time = 0
+					m.rallying = false
+					mini_hit_stream.play()
+					shake(20)
+					if m.kind == "tank":
+						if not m.take_chomp():
+							m_done = true
 					else:
 						m.die()
+						m_done = true
+					break
+
+				if head_hit or (body_hit >= 0 and body_hit <= 2):
+					var boom: Vector2 = s.explode_head()
+					spawn_hit_spark(boom, 56.0)
+					spawn_burst(boom, m.tint, 12)
+					shake(40)
+					mini_hit_stream.play()
+					mini_crunch_stream.play()
+					m.die()
 					m_done = true
-				elif head_hit or body_hit >= 0:
-					$World/Effects.popup(m.position + Vector2(0, -20), TEX_BLOCK, 32.0)
-					m.rallying = false
-					m.vel *= -0.7
+					break
+
+				if body_hit >= 0:
+					s.cut_at(body_hit)
+					spawn_hit_spark(m.position, 44.0)
+					spawn_burst(m.position, m.tint, 10)
+					shake(30)
+					mini_hit_stream.play()
+					mini_crunch_stream.play()
+					m.die()
+					m_done = true
+					break
+		else:
+			for s in alive_snakes():
+				if s.touches_prey(m.position, m.radius):
+					spawn_burst(m.position, Color("ff4757"), 6)
 					if not m.take_chomp():
 						m_done = true
-			elif s.hit_head(m.position, m.radius):
-				# gulp. that's what you get for standing around
-				spawn_burst(m.position, Color("ff4757"), 6)
-				if not m.take_chomp():
-					m_done = true
-			if m_done:
-				break
+					break
+
 		if m_done:
 			continue
-		# little feet, big stomps: minis squish critters on contact
 		for c in alive_critters():
 			if c.position.distance_to(m.position) < c.radius + m.radius:
 				add_score(15)
 				spawn_hit_spark(c.position, 30.0)
 				spawn_critter_squish(c.position)
+				spawn_burst(c.position, m.tint, 6)
+				mini_crunch_stream.play()
 				c.die()
+				break
 
 	# team kill: head into another snake's body = dead
 	for a in alive_snakes():
